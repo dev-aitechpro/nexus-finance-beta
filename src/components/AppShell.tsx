@@ -301,13 +301,17 @@ export function AppShell({ children }: { children: ReactNode }) {
               rel="noopener noreferrer"
               className="footer-link"
               style={{ color: "#7B2FF7" }}
-              title="Boosty"
+              title="Boosty — платные посты с новыми сборками"
             >
               <BoostyIcon size={14} /> Boosty
             </a>
             <span className="hidden sm:inline">|</span>
-            {/* Лицензия ещё не выбрана (см. license.txt и docs/Лицензирование.md),
-                поэтому в футере нет названия лицензии — не выдаём себя за MIT. */}
+            {/* Лицензии на исходники нет и не будет: исходный код закрыт,
+                репозиторий приватный, пользователям раздаются собранные
+                установщики. Поэтому в футере нет названия лицензии — и
+                объявлять MIT, которого не было, тоже незачем. Условия
+                использования — в license.txt, разбор — в
+                docs/Лицензирование.md. */}
             <span>© {new Date().getFullYear()} Павел К.</span>
           </div>
         </footer>
