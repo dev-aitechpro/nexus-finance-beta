@@ -13,7 +13,7 @@
 // Пропущенные копии — не ошибка: до первой сборки Windows артефакта ещё нет.
 // Ошибка — только когда копии есть и различаются.
 import { createHash } from "node:crypto";
-import { existsSync, readFileSync, statSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { extractFile } from "@electron/asar";
 
@@ -81,22 +81,77 @@ if (mismatched.length === 0) {
   process.exit(1);
 }
 
-// Отдельно: APK должен быть не старше ассетов, из которых он собран.
-// Gradle пересобирает APK не всегда, и на выходе может лежать пакет,
-// собранный из прежней копии вёрстки с тем же именем.
+// Отдельно: APK должен содержать тот же бандл, что и dist.
+//
+// Сначала здесь стояло сравнение по времени файлов, и оно врубалось ложно:
+// время меняется и от `cap sync` (перезаписывает файл тем же содержимым), и
+// просто от того, что файл тронули. Пришлось выяснять это по готовому APK.
+//
+// Поэтому сравниваем содержимое: APK — это zip, и нужная запись читается из
+// него напрямую. Зависимость не нужна: формат zip разбирается вручную по
+// central directory, а распаковка — zlib.inflateRawSync из стандартной
+// библиотеки.
+import { inflateRawSync } from "node:zlib";
+
+const EOCD_SIGNATURE = 0x06054b50;
+const CENTRAL_SIGNATURE = 0x02014b50;
+
+/** Достать запись zip-архива по точному имени; null, если записи нет. */
+const readZipEntry = (zip, wanted) => {
+  let eocd = -1;
+  for (let i = zip.length - 22; i >= 0 && i > zip.length - 65_536; i -= 1) {
+    if (zip.readUInt32LE(i) === EOCD_SIGNATURE) {
+      eocd = i;
+      break;
+    }
+  }
+  if (eocd < 0) throw new Error("zip: не найден End of Central Directory");
+
+  const count = zip.readUInt16LE(eocd + 10);
+  let offset = zip.readUInt32LE(eocd + 16);
+  for (let i = 0; i < count; i += 1) {
+    if (offset + 46 > zip.length || zip.readUInt32LE(offset) !== CENTRAL_SIGNATURE) break;
+    const nameLen = zip.readUInt16LE(offset + 28);
+    const extraLen = zip.readUInt16LE(offset + 30);
+    const commentLen = zip.readUInt16LE(offset + 32);
+    const localOffset = zip.readUInt32LE(offset + 42);
+    const name = zip.toString("utf8", offset + 46, offset + 46 + nameLen);
+    if (name === wanted) {
+      const nameLenLocal = zip.readUInt16LE(localOffset + 26);
+      const extraLenLocal = zip.readUInt16LE(localOffset + 28);
+      const method = zip.readUInt16LE(localOffset + 8);
+      const compressedSize = zip.readUInt32LE(localOffset + 18);
+      const start = localOffset + 30 + nameLenLocal + extraLenLocal;
+      const raw = zip.subarray(start, start + compressedSize);
+      return method === 0 ? raw : inflateRawSync(raw);
+    }
+    offset += 46 + nameLen + extraLen + commentLen;
+  }
+  return null;
+};
+
 if (copies.length > 1 && existsSync(APK)) {
-  const androidCopy = copies.find((c) => c.name.includes("android"));
-  if (androidCopy) {
-    const apkTime = statSync(APK).mtimeMs;
-    const assetsTime = statSync(androidPath).mtimeMs;
+  const distCopy = copies[0];
+  try {
+    const inside = readZipEntry(readFileSync(APK), "assets/public/index.html");
     console.log("");
-    if (apkTime + 1000 < assetsTime) {
-      console.log(`✗ APK старше ассетов, из которых он должен быть собран.`);
-      console.log(`    app-release.apk     ${new Date(apkTime).toISOString()}`);
-      console.log(`    assets/public/…     ${new Date(assetsTime).toISOString()}`);
+    if (inside === null) {
+      console.log(`✗ в APK нет assets/public/index.html — пакет собран не из того, что проверяем.`);
+      process.exit(1);
+    }
+    // distCopy — это запись { name, buf }; хэш считается по buf.
+    if (short(inside) === short(distCopy.buf)) {
+      console.log(`✓ внутри app-release.apk тот же бандл (sha256 ${short(distCopy.buf).slice(0, 16)}).`);
+    } else {
+      console.log(`✗ внутри app-release.apk другой бандл.`);
+      console.log(`    APK  sha256 ${short(inside)} (${inside.length} байт)`);
+      console.log(`    dist sha256 ${short(distCopy.buf)} (${distCopy.buf.length} байт)`);
       console.log("  Пересоберите APK: `npm run build:apk`.");
       process.exit(1);
     }
-    console.log(`✓ app-release.apk не старше ассетов Android.`);
+  } catch (e) {
+    console.log("");
+    console.log(`✗ не удалось прочитать APK как zip: ${e.message}`);
+    process.exit(1);
   }
 }

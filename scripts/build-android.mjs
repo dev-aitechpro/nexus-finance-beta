@@ -279,6 +279,11 @@ const newestSource = (() => {
     join(ROOT, 'vite.shared.ts'),
     join(ROOT, 'vite.dev.config.ts'),
     join(ROOT, 'package.json'),
+    // license.txt подключается в бандл как строка (license.txt?raw в
+    // src/lib/license.ts), поэтому он такой же исходник, как и код: правка
+    // условий обязана пересобирать сборку. Без него в релиз уехал бы APK со
+    // старым текстом, а в этом тексте — запрет распространения.
+    join(ROOT, 'license.txt'),
   ];
   let newest = 0;
   let newestName = '';
