@@ -26,3 +26,12 @@ declare module "*.wasm?url" {
   const url: string;
   export default url;
 }
+
+// Условия использования лежат в license.txt в корне репозитория и
+// подключаются в бандл как строка. Так текст остаётся один: тот же файл
+// читают документация и человек, открывший условия в программе. Отдельная
+// копия в src/ рано или поздно разошлась бы с ним.
+declare module "*.txt?raw" {
+  const text: string;
+  export default text;
+}

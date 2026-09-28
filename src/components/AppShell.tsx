@@ -12,6 +12,7 @@ import { isBetaVersion } from "../lib/updater";
 import { platform } from "../platform";
 import { cn } from "../utils/cn";
 import { BoostyIcon, TelegramIcon } from "./BrandIcons";
+import { LicenseLink } from "./LicenseDialog";
 import { BottomSheet } from "./ui";
 
 const NAV: { tab: Tab; label: string; icon: LucideIcon }[] = [
@@ -306,12 +307,13 @@ export function AppShell({ children }: { children: ReactNode }) {
               <BoostyIcon size={14} /> Boosty
             </a>
             <span className="hidden sm:inline">|</span>
-            {/* Лицензии на исходники нет и не будет: исходный код закрыт,
-                репозиторий приватный, пользователям раздаются собранные
-                установщики. Поэтому в футере нет названия лицензии — и
-                объявлять MIT, которого не было, тоже незачем. Условия
-                использования — в license.txt, разбор — в
-                docs/Лицензирование.md. */}
+            {/* Условия использования видны отсюда: запрет распространения —
+                главное из них, и человек должен иметь к нему доступ сразу,
+                а не искать в папке установки. Название лицензии на код
+                не указываем: исходники закрыты, репозиторий приватный,
+                а объявлять MIT, которого не было, незачем. */}
+            <LicenseLink />
+            <span className="hidden sm:inline">|</span>
             <span>© {new Date().getFullYear()} Павел К.</span>
           </div>
         </footer>

@@ -14,6 +14,7 @@ import { storageInfo, storageService } from "../lib/storage";
 import type { StorageDescription } from "../storage";
 import { describeTier } from "../platform/capabilities";
 import { platform } from "../platform";
+import { LicenseLink } from "../components/LicenseDialog";
 import { BETA_NOTE, isBetaVersion, updateModeNote, useUpdater } from "../lib/updater";
 import type { PlatformBridge } from "../platform/types";
 import type { Currency, Theme } from "../lib/types";
@@ -107,6 +108,13 @@ function UpdateSection({
       {isBeta ? (
         <p className="text-xs mt-2" style={{ color: "var(--muted)" }}>{BETA_NOTE}</p>
       ) : null}
+
+      {/* Условия — не мелкий шрифт в подвале настроек, а обычная кнопка
+          рядом с тем, чем человек пользуется. Главное из них — запрет
+          распространения — должно быть под рукой, а не спрятано. */}
+      <div className="mt-4">
+        <LicenseLink className="btn btn-ghost" label="Условия использования" />
+      </div>
 
       <div className="flex flex-wrap gap-2.5 mt-4">
         {canCheck ? (

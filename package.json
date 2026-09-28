@@ -135,7 +135,6 @@
       "uninstallDisplayName": "NEXUS Finance ${version}",
       "runAfterFinish": true,
       "deleteAppDataOnUninstall": false,
-      "license": "license.txt",
       "differentialPackage": true
     },
     "publish": {
