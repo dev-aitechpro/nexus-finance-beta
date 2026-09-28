@@ -1,0 +1,4202 @@
+{
+  "name": "NEXUS Finance",
+  "generatedAt": "2026-09-28T07:48:03.349Z",
+  "note": "Сгенерировано командой «npm run map». Ручные описания правьте в map.config.ts.",
+  "entryPoints": [
+    "index.html",
+    "index.dev.html",
+    "electron-main.cjs",
+    "preload.cjs",
+    "vite.shared.ts",
+    "vite.config.ts",
+    "vite.dev.config.ts",
+    "vitest.config.ts",
+    "map.config.ts",
+    "project-map.json"
+  ],
+  "areas": [
+    {
+      "path": "src/storage",
+      "role": "Слой хранения: SQLite + миграция с localStorage (ТЗ Группа 1)"
+    },
+    {
+      "path": "src/animations",
+      "role": "Delta-time и WAAPI-анимации, деградация на слабых устройствах (ТЗ Группа 3)"
+    },
+    {
+      "path": "src/platform",
+      "role": "Мосты платформы: Windows / Android / web (ТЗ Группа 2)"
+    },
+    {
+      "path": "src/components",
+      "role": "UI-компоненты и онбординг"
+    },
+    {
+      "path": "src/views",
+      "role": "Экраны приложения"
+    },
+    {
+      "path": "src/hooks",
+      "role": "Состояние приложения и хуки"
+    },
+    {
+      "path": "src/lib",
+      "role": "Доменная логика: расчёты, константы, типы, фасад хранилища"
+    },
+    {
+      "path": "tests",
+      "role": "Тесты: хранилище (миграции, транзакции, откат) и анимации (60/144 Гц)"
+    },
+    {
+      "path": "scripts",
+      "role": "Скрипты npm: генератор карты проекта, проверка собранного артефакта"
+    },
+    {
+      "path": "docs",
+      "role": "Документация: отчёт о выполнении ТЗ"
+    }
+  ],
+  "layers": {
+    "infra": 51,
+    "test": 6,
+    "storage": 10,
+    "state": 5,
+    "platform": 4,
+    "ui": 3
+  },
+  "stats": {
+    "files": 79,
+    "lines": 22850,
+    "documentedModules": 39,
+    "symbols": 303,
+    "importEdges": 170
+  },
+  "modules": [
+    {
+      "path": "src/storage/types.ts",
+      "title": "Контракты хранилища",
+      "summary": "SqlDriver (SQL-уровень) и StorageAdapter (документный уровень), SnapshotStore.",
+      "layer": "storage",
+      "exports": [
+        "StorageAdapter",
+        "SqlDriver",
+        "SnapshotStore",
+        "CollectionKey"
+      ],
+      "depends-on": [
+        "src/lib/types.ts"
+      ],
+      "used-by": [
+        "src/storage/index.ts",
+        "src/storage/memory.ts",
+        "src/storage/migrate.ts",
+        "src/storage/schema.ts",
+        "src/storage/snapshots.ts",
+        "src/storage/sqlite.ts"
+      ],
+      "lines": 100,
+      "missing": false
+    },
+    {
+      "path": "src/storage/schema.ts",
+      "title": "Схема SQLite",
+      "summary": "По таблице на коллекцию AppData, индексы по фильтруемым полям, версия схемы и шаги миграций.",
+      "layer": "storage",
+      "exports": [
+        "COLLECTION_SPECS",
+        "SCHEMA_VERSION",
+        "MIGRATIONS",
+        "upsertRowOp"
+      ],
+      "depends-on": [
+        "src/storage/types.ts"
+      ],
+      "used-by": [
+        "src/storage/index.ts",
+        "src/storage/memory.ts",
+        "src/storage/sqlite.ts",
+        "tests/storage.test.ts"
+      ],
+      "lines": 277,
+      "missing": false
+    },
+    {
+      "path": "src/storage/sqlite.ts",
+      "title": "SQLite-адаптер (sql.js)",
+      "summary": "Драйвер с транзакциями/откатом и документный адаптер с дифф-записью и снапшотами БД.",
+      "layer": "storage",
+      "exports": [
+        "SqliteSqlDriver",
+        "SqliteStorage",
+        "browserSqlJsLoader"
+      ],
+      "depends-on": [
+        "src/lib/engine.ts",
+        "src/lib/types.ts",
+        "src/storage/migrate.ts",
+        "src/storage/schema.ts",
+        "src/storage/types.ts",
+        "src/storage/wasmAsset.ts"
+      ],
+      "used-by": [
+        "src/storage/index.ts",
+        "tests/helpers/sqljs.ts",
+        "tests/storage.test.ts"
+      ],
+      "lines": 598,
+      "missing": false
+    },
+    {
+      "path": "src/storage/memory.ts",
+      "title": "Адаптер в памяти",
+      "summary": "Тесты и деградация: транзакции через снимок состояния, откат при ошибке.",
+      "layer": "storage",
+      "exports": [
+        "MemoryStorage"
+      ],
+      "depends-on": [
+        "src/lib/engine.ts",
+        "src/lib/types.ts",
+        "src/storage/schema.ts",
+        "src/storage/types.ts"
+      ],
+      "used-by": [
+        "src/storage/index.ts",
+        "tests/storage.test.ts"
+      ],
+      "lines": 142,
+      "missing": false
+    },
+    {
+      "path": "src/storage/snapshots.ts",
+      "title": "Хранилища снапшота БД",
+      "summary": "Файл в userData (Electron) → IndexedDB (браузер) → localStorage → память.",
+      "layer": "storage",
+      "exports": [
+        "createSnapshotStore",
+        "ElectronSnapshotStore",
+        "IndexedDbSnapshotStore"
+      ],
+      "depends-on": [
+        "src/storage/types.ts"
+      ],
+      "used-by": [
+        "src/storage/index.ts",
+        "tests/storage.test.ts"
+      ],
+      "lines": 287,
+      "missing": false
+    },
+    {
+      "path": "src/storage/migrate.ts",
+      "title": "Миграция с localStorage",
+      "summary": "Импорт наследия в одну транзакцию; исходный ключ сохраняется для отката.",
+      "layer": "storage",
+      "exports": [
+        "migrateLegacyData",
+        "LEGACY_MIGRATION_FLAG",
+        "readLegacySource"
+      ],
+      "depends-on": [
+        "src/lib/constants.ts",
+        "src/lib/normalize.ts",
+        "src/storage/types.ts"
+      ],
+      "used-by": [
+        "src/storage/index.ts",
+        "src/storage/sqlite.ts",
+        "tests/storage.test.ts"
+      ],
+      "lines": 250,
+      "missing": false
+    },
+    {
+      "path": "src/storage/index.ts",
+      "title": "Точка входа хранилища",
+      "summary": "Выбор драйвера, ленивая инициализация, описание хранилища для настроек.",
+      "layer": "storage",
+      "exports": [
+        "getStorage",
+        "describeStorage",
+        "resetStorage",
+        "migrationStatus"
+      ],
+      "depends-on": [
+        "src/storage/memory.ts",
+        "src/storage/migrate.ts",
+        "src/storage/schema.ts",
+        "src/storage/snapshots.ts",
+        "src/storage/sqlite.ts",
+        "src/storage/types.ts"
+      ],
+      "used-by": [
+        "src/components/Onboarding.tsx",
+        "src/lib/storage.ts",
+        "src/views/Settings.tsx",
+        "tests/storage.test.ts"
+      ],
+      "lines": 154,
+      "missing": false
+    },
+    {
+      "path": "src/storage/wasmAsset.ts",
+      "title": "Встроенный WASM",
+      "summary": "Статический импорт sql-wasm.wasm через запрос ?wasm-inline (плагин vite.shared.ts).",
+      "layer": "storage",
+      "exports": [],
+      "depends-on": [],
+      "used-by": [
+        "src/storage/sqlite.ts"
+      ],
+      "lines": 13,
+      "missing": false
+    },
+    {
+      "path": "src/lib/normalize.ts",
+      "title": "Нормализация документа",
+      "summary": "Приведение любого источника к валидному AppData, слияние документов, проверка пустоты.",
+      "layer": "storage",
+      "exports": [
+        "normalizeAppData",
+        "mergeAppData",
+        "isEmptyAppData",
+        "withCompleteShape"
+      ],
+      "depends-on": [
+        "src/lib/engine.ts",
+        "src/lib/types.ts"
+      ],
+      "used-by": [
+        "src/lib/storage.ts",
+        "src/storage/migrate.ts",
+        "tests/storage.test.ts"
+      ],
+      "lines": 83,
+      "missing": false
+    },
+    {
+      "path": "src/lib/storage.ts",
+      "title": "Фасад хранилища",
+      "summary": "storageService.load/save/clear поверх адаптера, экспорт/импорт файла, Яндекс Диск.",
+      "layer": "storage",
+      "exports": [
+        "storageService",
+        "serializeExport",
+        "parseImport",
+        "storageInfo"
+      ],
+      "depends-on": [
+        "src/lib/engine.ts",
+        "src/lib/normalize.ts",
+        "src/lib/types.ts",
+        "src/storage/index.ts"
+      ],
+      "used-by": [
+        "src/hooks/AppProvider.tsx",
+        "src/views/Settings.tsx",
+        "tests/storage.test.ts"
+      ],
+      "lines": 173,
+      "missing": false
+    },
+    {
+      "path": "src/animations/ticker.ts",
+      "title": "Delta-time цикл",
+      "summary": "Скорость в единицах в секунду: анимация одинакова на 60 и 144 Гц; ограничение длинного кадра.",
+      "layer": "state",
+      "exports": [
+        "createTicker",
+        "createValueTransition",
+        "stepLinear"
+      ],
+      "depends-on": [],
+      "used-by": [
+        "src/components/ui.tsx",
+        "tests/animations.test.ts"
+      ],
+      "lines": 149,
+      "missing": false
+    },
+    {
+      "path": "src/animations/waapi.ts",
+      "title": "WAAPI-переходы",
+      "summary": "Анимации только transform/opacity, отключение на слабом устройстве и при reduced-motion, stagger с лимитом.",
+      "layer": "state",
+      "exports": [
+        "animate",
+        "resolveMotionPlan",
+        "riseIn",
+        "scaleProgress",
+        "stagger"
+      ],
+      "depends-on": [
+        "src/platform/capabilities.ts"
+      ],
+      "used-by": [
+        "src/components/CategoryPicker.tsx",
+        "src/components/ui.tsx",
+        "tests/animations.test.ts"
+      ],
+      "lines": 279,
+      "missing": false
+    },
+    {
+      "path": "src/platform/capabilities.ts",
+      "title": "Возможности устройства",
+      "summary": "Определение RAM/ядер/reduced-motion, уровень low/mid/high, data-perf на <html>.",
+      "layer": "platform",
+      "exports": [
+        "detectCapabilities",
+        "applyCapabilities",
+        "describeTier"
+      ],
+      "depends-on": [],
+      "used-by": [
+        "src/animations/waapi.ts",
+        "src/hooks/useCapabilities.ts",
+        "src/platform/index.ts",
+        "src/views/Settings.tsx",
+        "tests/animations.test.ts"
+      ],
+      "lines": 95,
+      "missing": false
+    },
+    {
+      "path": "src/platform/index.ts",
+      "title": "Выбор платформы",
+      "summary": "Определение Windows/Android/web и создание соответствующего моста.",
+      "layer": "platform",
+      "exports": [
+        "platform",
+        "detectPlatform"
+      ],
+      "depends-on": [
+        "src/platform/android/capacitorBridge.ts",
+        "src/platform/capabilities.ts",
+        "src/platform/types.ts",
+        "src/platform/webBridge.ts",
+        "src/platform/windows/electronBridge.ts"
+      ],
+      "used-by": [
+        "src/components/AppShell.tsx",
+        "src/hooks/AppProvider.tsx",
+        "src/hooks/usePlatformBackButton.ts",
+        "src/views/Settings.tsx"
+      ],
+      "lines": 38,
+      "missing": false
+    },
+    {
+      "path": "src/platform/windows/electronBridge.ts",
+      "title": "Мост Windows",
+      "summary": "Данные в файле SQLite в userData, открытие папки с данными.",
+      "layer": "platform",
+      "exports": [
+        "createElectronBridge",
+        "detectWindows"
+      ],
+      "depends-on": [
+        "src/lib/updater.ts",
+        "src/platform/types.ts",
+        "src/platform/webBridge.ts"
+      ],
+      "used-by": [
+        "src/platform/index.ts"
+      ],
+      "lines": 108,
+      "missing": false
+    },
+    {
+      "path": "src/platform/android/capacitorBridge.ts",
+      "title": "Мост Android",
+      "summary": "Подготовка к Capacitor: хранилище в файловой системе, кнопка «Назад», уведомления.",
+      "layer": "platform",
+      "exports": [
+        "createAndroidBridge",
+        "detectAndroid"
+      ],
+      "depends-on": [
+        "src/lib/updater.ts",
+        "src/platform/types.ts",
+        "src/platform/webBridge.ts"
+      ],
+      "used-by": [
+        "src/platform/index.ts"
+      ],
+      "lines": 521,
+      "missing": false
+    },
+    {
+      "path": "src/hooks/AppProvider.tsx",
+      "title": "Состояние приложения",
+      "summary": "Загрузка и дебаунс сохранения через storageService, операции над данными, тосты.",
+      "layer": "state",
+      "exports": [
+        "AppProvider",
+        "useApp"
+      ],
+      "depends-on": [
+        "src/lib/engine.ts",
+        "src/lib/storage.ts",
+        "src/lib/types.ts",
+        "src/lib/utils.ts",
+        "src/platform/index.ts"
+      ],
+      "used-by": [
+        "src/components/AppShell.tsx",
+        "src/components/DevTools.tsx",
+        "src/components/TransactionModal.tsx",
+        "src/components/ui.tsx",
+        "src/views/Dashboard.tsx",
+        "src/views/Investments.tsx",
+        "src/views/Payments.tsx",
+        "src/views/Planning.tsx"
+      ],
+      "lines": 574,
+      "missing": false
+    },
+    {
+      "path": "src/hooks/useCapabilities.ts",
+      "title": "Хук возможностей устройства",
+      "summary": "Одноразовое определение устройства + реакция на смену prefers-reduced-motion.",
+      "layer": "state",
+      "exports": [
+        "useCapabilities"
+      ],
+      "depends-on": [
+        "src/platform/capabilities.ts"
+      ],
+      "used-by": [
+        "src/components/CategoryPicker.tsx",
+        "src/components/ui.tsx",
+        "src/views/Settings.tsx"
+      ],
+      "lines": 32,
+      "missing": false
+    },
+    {
+      "path": "src/hooks/usePlatformBackButton.ts",
+      "title": "Аппаратная кнопка «Назад»",
+      "summary": "Через PlatformBridge: закрывает модалку, затем возвращает на главный экран.",
+      "layer": "state",
+      "exports": [
+        "usePlatformBackButton"
+      ],
+      "depends-on": [
+        "src/platform/index.ts"
+      ],
+      "used-by": [],
+      "lines": 35,
+      "missing": false
+    },
+    {
+      "path": "src/components/CategoryPicker.tsx",
+      "title": "Выбор категории с иконками",
+      "summary": "Сетка плиток с иконкой и цветом категории вместо нативного <select> (в select иконку показать нельзя).",
+      "layer": "ui",
+      "exports": [
+        "CategoryPicker",
+        "CategoryChipRow"
+      ],
+      "depends-on": [
+        "src/animations/waapi.ts",
+        "src/components/ui.tsx",
+        "src/hooks/useCapabilities.ts",
+        "src/lib/constants.ts",
+        "src/lib/types.ts"
+      ],
+      "used-by": [
+        "src/components/TransactionModal.tsx",
+        "src/views/Payments.tsx",
+        "src/views/Planning.tsx",
+        "src/views/Scanner.tsx"
+      ],
+      "lines": 126,
+      "missing": false
+    },
+    {
+      "path": "src/components/Onboarding.tsx",
+      "title": "Онбординг",
+      "summary": "4 шага на русском, показ один раз по флагу в БД.",
+      "layer": "ui",
+      "exports": [
+        "Onboarding",
+        "ONBOARDING_FLAG"
+      ],
+      "depends-on": [
+        "src/components/ui.tsx",
+        "src/hooks/useOverlayStack.tsx",
+        "src/storage/index.ts"
+      ],
+      "used-by": [],
+      "lines": 133,
+      "missing": false
+    },
+    {
+      "path": "src/views/Settings.tsx",
+      "title": "Настройки",
+      "summary": "Раздел «Хранилище данных»: драйвер, режим журнала, размер БД, режим графики; бэкапы.",
+      "layer": "ui",
+      "exports": [
+        "Settings"
+      ],
+      "depends-on": [
+        "src/components/ui.tsx",
+        "src/hooks/AppProvider.tsx",
+        "src/hooks/useCapabilities.ts",
+        "src/lib/constants.ts",
+        "src/lib/storage.ts",
+        "src/lib/types.ts",
+        "src/lib/updater.ts",
+        "src/lib/utils.ts"
+      ],
+      "used-by": [],
+      "lines": 518,
+      "missing": false
+    },
+    {
+      "path": "tests/storage.test.ts",
+      "title": "Тесты хранилища",
+      "summary": "Схема, round-trip, UPSERT, транзакции, откат, персистентность, миграции.",
+      "layer": "test",
+      "exports": [],
+      "depends-on": [
+        "src/lib/engine.ts",
+        "src/lib/normalize.ts",
+        "src/lib/storage.ts",
+        "src/lib/types.ts",
+        "src/storage/index.ts",
+        "src/storage/memory.ts",
+        "src/storage/migrate.ts",
+        "src/storage/schema.ts"
+      ],
+      "used-by": [],
+      "lines": 763,
+      "missing": false
+    },
+    {
+      "path": "tests/subscriptions.test.ts",
+      "title": "Тесты регулярных платежей",
+      "summary": "Удаление не воскресает, месяц закрывается, платежи будущего месяца не требуют подтверждения.",
+      "layer": "test",
+      "exports": [],
+      "depends-on": [
+        "src/lib/engine.ts",
+        "src/lib/types.ts",
+        "tests/helpers/fixtures.ts"
+      ],
+      "used-by": [],
+      "lines": 207,
+      "missing": false
+    },
+    {
+      "path": "tests/animations.test.ts",
+      "title": "Тесты анимаций",
+      "summary": "Независимость от 60/144 Гц, лимит длинного кадра, деградация, определение устройства.",
+      "layer": "test",
+      "exports": [],
+      "depends-on": [
+        "src/animations/ticker.ts",
+        "src/animations/waapi.ts",
+        "src/platform/capabilities.ts"
+      ],
+      "used-by": [],
+      "lines": 210,
+      "missing": false
+    },
+    {
+      "path": "vite.shared.ts",
+      "title": "Плагин сборки WASM",
+      "summary": "Отдаёт .wasm как JS-модуль с base64: нужно для SQLite и для single-file сборки под file://.",
+      "layer": "infra",
+      "exports": [
+        "wasmInlinePlugin",
+        "WASM_INLINE_QUERY"
+      ],
+      "depends-on": [],
+      "used-by": [
+        "vite.config.ts",
+        "vite.dev.config.ts"
+      ],
+      "lines": 35,
+      "missing": false
+    },
+    {
+      "path": "scripts/generate-project-map.mjs",
+      "title": "Генератор карты проекта",
+      "summary": "Сканирует файлы, объединяет ручные описания из map.config.ts, пишет project-map.json.",
+      "layer": "infra",
+      "exports": [],
+      "depends-on": [],
+      "used-by": [],
+      "lines": 351,
+      "missing": false
+    },
+    {
+      "path": "scripts/check-dist.mjs",
+      "title": "Проверка артефакта сборки",
+      "summary": "Ищет голые импорты node-модулей и внешние js/css в dist/index.html до релиза.",
+      "layer": "infra",
+      "exports": [],
+      "depends-on": [],
+      "used-by": [],
+      "lines": 94,
+      "missing": false
+    },
+    {
+      "path": "scripts/bench-storage.mjs",
+      "title": "Бенчмарки хранилища",
+      "summary": "Холодный старт, восстановление из снапшота, запись/чтение, задержка SQL-запроса.",
+      "layer": "infra",
+      "exports": [
+        "resolve"
+      ],
+      "depends-on": [],
+      "used-by": [],
+      "lines": 536,
+      "missing": false
+    },
+    {
+      "path": "docs/Выполнение-ТЗ.md",
+      "title": "Отчёт о выполнении ТЗ",
+      "summary": "Что сделано по группам 1–5 и §6, как проверить и что осталось за рамками среды.",
+      "layer": "infra",
+      "exports": [],
+      "depends-on": [],
+      "used-by": [],
+      "lines": 851,
+      "missing": false
+    },
+    {
+      "path": "scripts/build-windows.mjs",
+      "title": "Сборка установщика Windows",
+      "summary": "Релизная сборка Windows: vite build + electron-builder (NSIS и portable). Ставит зеркало бинарей, повторяет сборку при обрыве сети, печатает путь и размер установщика.",
+      "layer": "infra",
+      "exports": [],
+      "depends-on": [],
+      "used-by": [],
+      "lines": 111,
+      "missing": false
+    },
+    {
+      "path": "scripts/build-android.mjs",
+      "title": "Сборка APK (Android)",
+      "summary": "Релизная сборка Android: находит SDK и JDK, пишет local.properties, делает cap sync и сверяет бандл по SHA-256, повторяет gradle при обрыве TLS, печатает badging готового APK.",
+      "layer": "infra",
+      "exports": [],
+      "depends-on": [],
+      "used-by": [],
+      "lines": 402,
+      "missing": false
+    },
+    {
+      "path": "scripts/check-file-protocol.mjs",
+      "title": "Проверка протокола file://",
+      "summary": "Проверяет, что собранный бандл пригоден под file:// и мобильный WebView: абсолютные src/href, url(/…), fetch(\"/…\"), import(\"/…\"), service worker, следы base: \"/\".",
+      "layer": "infra",
+      "exports": [],
+      "depends-on": [],
+      "used-by": [],
+      "lines": 501,
+      "missing": false
+    },
+    {
+      "path": "scripts/check-desktop-db.mjs",
+      "title": "Проверка базы в профиле",
+      "summary": "Читает рабочий файл SQLite из профиля пользователя: сигнатура, sql.js, PRAGMA quick_check, состав таблиц и число строк.",
+      "layer": "infra",
+      "exports": [],
+      "depends-on": [],
+      "used-by": [],
+      "lines": 465,
+      "missing": false
+    },
+    {
+      "path": "scripts/check-docs.mjs",
+      "title": "Проверка документации",
+      "summary": "Ищет битые Markdown-ссылки и якоря, а также устаревшие упоминания файлов в обратных кавычках — то, что протухает в документации молча.",
+      "layer": "infra",
+      "exports": [],
+      "depends-on": [],
+      "used-by": [],
+      "lines": 272,
+      "missing": false
+    },
+    {
+      "path": "docs/Решение-проблем.md",
+      "title": "Решение проблем",
+      "summary": "Симптом → причина → решение: запуск, база, сборка, CSP, сеть, Android и чего делать нельзя.",
+      "layer": "infra",
+      "exports": [],
+      "depends-on": [],
+      "used-by": [],
+      "lines": 618,
+      "missing": false
+    },
+    {
+      "path": "docs/Архитектура.md",
+      "title": "Архитектура",
+      "summary": "Устройство системы: слои, хранилище, домен, платформенный слой, IPC, сборка, анимации, риски.",
+      "layer": "infra",
+      "exports": [],
+      "depends-on": [],
+      "used-by": [],
+      "lines": 553,
+      "missing": false
+    },
+    {
+      "path": "docs/Разработка.md",
+      "title": "Руководство разработчика",
+      "summary": "Как разрабатывать: требования, запуск, обязательные проверки, соглашения, ловушки, чек-лист ревью.",
+      "layer": "infra",
+      "exports": [],
+      "depends-on": [],
+      "used-by": [],
+      "lines": 630,
+      "missing": false
+    },
+    {
+      "path": "docs/Лицензирование.md",
+      "title": "Лицензирование",
+      "summary": "Лицензия ещё не выбрана: сравнение вариантов, критерии выбора, лицензии зависимостей и чек-лист оформления решения.",
+      "layer": "infra",
+      "exports": [],
+      "depends-on": [],
+      "used-by": [],
+      "lines": 312,
+      "missing": false
+    }
+  ],
+  "symbols": {
+    "*": {
+      "file": "src/storage/index.ts",
+      "line": 146,
+      "type": "re-export"
+    },
+    "addDays": {
+      "file": "src/lib/utils.ts",
+      "line": 22,
+      "type": "function"
+    },
+    "addMonths": {
+      "file": "src/lib/utils.ts",
+      "line": 28,
+      "type": "function"
+    },
+    "animate": {
+      "file": "src/animations/waapi.ts",
+      "line": 120,
+      "type": "function"
+    },
+    "AnimateOptions": {
+      "file": "src/animations/waapi.ts",
+      "line": 73,
+      "type": "interface"
+    },
+    "APP_VERSION": {
+      "file": "src/lib/constants.ts",
+      "line": 9,
+      "type": "const"
+    },
+    "AppData": {
+      "file": "src/lib/types.ts",
+      "line": 114,
+      "type": "interface"
+    },
+    "applyCapabilities": {
+      "file": "src/platform/capabilities.ts",
+      "line": 77,
+      "type": "function"
+    },
+    "AppProvider": {
+      "file": "src/hooks/AppProvider.tsx",
+      "line": 78,
+      "type": "function"
+    },
+    "AppShell": {
+      "file": "src/components/AppShell.tsx",
+      "line": 132,
+      "type": "function"
+    },
+    "BETA_NOTE": {
+      "file": "src/lib/updater.ts",
+      "line": 224,
+      "type": "const"
+    },
+    "BoostyIcon": {
+      "file": "src/components/BrandIcons.tsx",
+      "line": 29,
+      "type": "function"
+    },
+    "BottomSheet": {
+      "file": "src/components/ui.tsx",
+      "line": 464,
+      "type": "function"
+    },
+    "browserHost": {
+      "file": "src/animations/ticker.ts",
+      "line": 16,
+      "type": "const"
+    },
+    "browserSqlJsLoader": {
+      "file": "src/storage/sqlite.ts",
+      "line": 42,
+      "type": "function"
+    },
+    "Budget": {
+      "file": "src/lib/types.ts",
+      "line": 63,
+      "type": "interface"
+    },
+    "BudgetStat": {
+      "file": "src/lib/engine.ts",
+      "line": 460,
+      "type": "interface"
+    },
+    "BudgetStatus": {
+      "file": "src/lib/engine.ts",
+      "line": 458,
+      "type": "type"
+    },
+    "BudgetView": {
+      "file": "src/views/Planning.tsx",
+      "line": 94,
+      "type": "function"
+    },
+    "buildSeed": {
+      "file": "src/lib/engine.ts",
+      "line": 1272,
+      "type": "function"
+    },
+    "calculateNextMonthAmount": {
+      "file": "src/lib/engine.ts",
+      "line": 145,
+      "type": "function"
+    },
+    "calculatePaymentWithCarryOver": {
+      "file": "src/lib/engine.ts",
+      "line": 71,
+      "type": "function"
+    },
+    "CameraScanner": {
+      "file": "src/components/CameraScanner.tsx",
+      "line": 15,
+      "type": "function"
+    },
+    "CashflowChart": {
+      "file": "src/components/charts.tsx",
+      "line": 27,
+      "type": "function"
+    },
+    "CashflowPoint": {
+      "file": "src/lib/engine.ts",
+      "line": 515,
+      "type": "interface"
+    },
+    "cashflowSeries": {
+      "file": "src/lib/engine.ts",
+      "line": 527,
+      "type": "function"
+    },
+    "CATEGORIES": {
+      "file": "src/lib/constants.ts",
+      "line": 12,
+      "type": "const"
+    },
+    "Category": {
+      "file": "src/lib/types.ts",
+      "line": 134,
+      "type": "interface"
+    },
+    "CATEGORY_ICONS": {
+      "file": "src/components/ui.tsx",
+      "line": 44,
+      "type": "const"
+    },
+    "categoryBreakdown": {
+      "file": "src/lib/engine.ts",
+      "line": 588,
+      "type": "function"
+    },
+    "categoryById": {
+      "file": "src/lib/constants.ts",
+      "line": 32,
+      "type": "function"
+    },
+    "CategoryChipRow": {
+      "file": "src/components/CategoryPicker.tsx",
+      "line": 99,
+      "type": "function"
+    },
+    "CategoryHex": {
+      "file": "src/components/ui.tsx",
+      "line": 52,
+      "type": "function"
+    },
+    "CategoryPicker": {
+      "file": "src/components/CategoryPicker.tsx",
+      "line": 26,
+      "type": "function"
+    },
+    "CategoryPickerProps": {
+      "file": "src/components/CategoryPicker.tsx",
+      "line": 16,
+      "type": "interface"
+    },
+    "clamp": {
+      "file": "src/lib/utils.ts",
+      "line": 166,
+      "type": "function"
+    },
+    "clamp01": {
+      "file": "src/animations/ticker.ts",
+      "line": 101,
+      "type": "function"
+    },
+    "clampedDate": {
+      "file": "src/lib/utils.ts",
+      "line": 40,
+      "type": "function"
+    },
+    "collapseOutKeyframes": {
+      "file": "src/animations/waapi.ts",
+      "line": 165,
+      "type": "function"
+    },
+    "COLLECTION_SPECS": {
+      "file": "src/storage/schema.ts",
+      "line": 29,
+      "type": "const"
+    },
+    "CollectionKey": {
+      "file": "src/storage/types.ts",
+      "line": 13,
+      "type": "type"
+    },
+    "COLLECTIONS": {
+      "file": "src/lib/normalize.ts",
+      "line": 8,
+      "type": "const"
+    },
+    "CollectionSpec": {
+      "file": "src/storage/schema.ts",
+      "line": 21,
+      "type": "interface"
+    },
+    "ColumnSpec": {
+      "file": "src/storage/schema.ts",
+      "line": 15,
+      "type": "interface"
+    },
+    "compoundFV": {
+      "file": "src/lib/engine.ts",
+      "line": 656,
+      "type": "function"
+    },
+    "CompoundPoint": {
+      "file": "src/lib/engine.ts",
+      "line": 671,
+      "type": "interface"
+    },
+    "compoundSeries": {
+      "file": "src/lib/engine.ts",
+      "line": 677,
+      "type": "function"
+    },
+    "computeBudgetStats": {
+      "file": "src/lib/engine.ts",
+      "line": 469,
+      "type": "function"
+    },
+    "Confirm": {
+      "file": "src/views/Payments.tsx",
+      "line": 356,
+      "type": "function"
+    },
+    "ConfirmDialog": {
+      "file": "src/components/ui.tsx",
+      "line": 585,
+      "type": "function"
+    },
+    "confirmPaymentWithAmount": {
+      "file": "src/lib/engine.ts",
+      "line": 718,
+      "type": "function"
+    },
+    "confirmSourcePaymentWithAmount": {
+      "file": "src/lib/engine.ts",
+      "line": 836,
+      "type": "function"
+    },
+    "createAndroidBridge": {
+      "file": "src/platform/android/capacitorBridge.ts",
+      "line": 297,
+      "type": "function"
+    },
+    "createElectronBridge": {
+      "file": "src/platform/windows/electronBridge.ts",
+      "line": 28,
+      "type": "function"
+    },
+    "createSnapshotStore": {
+      "file": "src/storage/snapshots.ts",
+      "line": 279,
+      "type": "function"
+    },
+    "createStorageAdapter": {
+      "file": "src/storage/index.ts",
+      "line": 23,
+      "type": "function"
+    },
+    "createTableOps": {
+      "file": "src/storage/schema.ts",
+      "line": 171,
+      "type": "function"
+    },
+    "createTicker": {
+      "file": "src/animations/ticker.ts",
+      "line": 36,
+      "type": "function"
+    },
+    "createValueTransition": {
+      "file": "src/animations/ticker.ts",
+      "line": 117,
+      "type": "function"
+    },
+    "createWebBridge": {
+      "file": "src/platform/webBridge.ts",
+      "line": 67,
+      "type": "function"
+    },
+    "CURRENCIES": {
+      "file": "src/lib/constants.ts",
+      "line": 35,
+      "type": "const"
+    },
+    "Currency": {
+      "file": "src/lib/types.ts",
+      "line": 7,
+      "type": "type"
+    },
+    "currentMonthLabel": {
+      "file": "src/lib/utils.ts",
+      "line": 67,
+      "type": "function"
+    },
+    "Dashboard": {
+      "file": "src/views/Dashboard.tsx",
+      "line": 57,
+      "type": "function"
+    },
+    "daysInMonth": {
+      "file": "src/lib/utils.ts",
+      "line": 36,
+      "type": "function"
+    },
+    "daysUntil": {
+      "file": "src/lib/utils.ts",
+      "line": 43,
+      "type": "function"
+    },
+    "default": {
+      "file": "src/storage/sqljs.d.ts",
+      "line": 7,
+      "type": "default-value"
+    },
+    "deleteAllRowsOp": {
+      "file": "src/storage/schema.ts",
+      "line": 233,
+      "type": "function"
+    },
+    "deletePaymentSourceCompletely": {
+      "file": "src/lib/engine.ts",
+      "line": 1100,
+      "type": "function"
+    },
+    "deletePaymentTransactionCompletely": {
+      "file": "src/lib/engine.ts",
+      "line": 1198,
+      "type": "function"
+    },
+    "deleteRowsOp": {
+      "file": "src/storage/schema.ts",
+      "line": 223,
+      "type": "function"
+    },
+    "deleteSourceAndCarryNextMonth": {
+      "file": "src/lib/engine.ts",
+      "line": 1144,
+      "type": "function"
+    },
+    "deleteTransactionCompletely": {
+      "file": "src/lib/engine.ts",
+      "line": 943,
+      "type": "function"
+    },
+    "describeStorage": {
+      "file": "src/storage/index.ts",
+      "line": 121,
+      "type": "function"
+    },
+    "describeTier": {
+      "file": "src/platform/capabilities.ts",
+      "line": 89,
+      "type": "function"
+    },
+    "detectAndroid": {
+      "file": "src/platform/android/capacitorBridge.ts",
+      "line": 202,
+      "type": "function"
+    },
+    "detectCapabilities": {
+      "file": "src/platform/capabilities.ts",
+      "line": 43,
+      "type": "function"
+    },
+    "detectPlatform": {
+      "file": "src/platform/index.ts",
+      "line": 8,
+      "type": "function"
+    },
+    "detectWindows": {
+      "file": "src/platform/windows/electronBridge.ts",
+      "line": 25,
+      "type": "function"
+    },
+    "DeviceCapabilities": {
+      "file": "src/platform/capabilities.ts",
+      "line": 14,
+      "type": "interface"
+    },
+    "DeviceTier": {
+      "file": "src/platform/capabilities.ts",
+      "line": 8,
+      "type": "type"
+    },
+    "DevTools": {
+      "file": "src/components/DevTools.tsx",
+      "line": 10,
+      "type": "function"
+    },
+    "distanceFor": {
+      "file": "src/animations/ticker.ts",
+      "line": 147,
+      "type": "function"
+    },
+    "DonutChart": {
+      "file": "src/components/charts.tsx",
+      "line": 149,
+      "type": "function"
+    },
+    "DonutSlice": {
+      "file": "src/components/charts.tsx",
+      "line": 142,
+      "type": "interface"
+    },
+    "downloadFile": {
+      "file": "src/lib/utils.ts",
+      "line": 168,
+      "type": "function"
+    },
+    "downloadTextFile": {
+      "file": "src/platform/webBridge.ts",
+      "line": 50,
+      "type": "function"
+    },
+    "EASE_OUT": {
+      "file": "src/animations/waapi.ts",
+      "line": 7,
+      "type": "const"
+    },
+    "EASE_SPRING": {
+      "file": "src/animations/waapi.ts",
+      "line": 8,
+      "type": "const"
+    },
+    "easeOutCubic": {
+      "file": "src/animations/ticker.ts",
+      "line": 99,
+      "type": "function"
+    },
+    "easeOutQuint": {
+      "file": "src/animations/ticker.ts",
+      "line": 100,
+      "type": "function"
+    },
+    "ElectronAPI": {
+      "file": "src/lib/electronApi.ts",
+      "line": 7,
+      "type": "interface"
+    },
+    "ElectronSnapshotStore": {
+      "file": "src/storage/snapshots.ts",
+      "line": 252,
+      "type": "class"
+    },
+    "emptyData": {
+      "file": "src/lib/engine.ts",
+      "line": 1726,
+      "type": "function"
+    },
+    "emptyDocument": {
+      "file": "src/lib/storage.ts",
+      "line": 143,
+      "type": "function"
+    },
+    "EmptyState": {
+      "file": "src/components/ui.tsx",
+      "line": 800,
+      "type": "function"
+    },
+    "fadeIn": {
+      "file": "src/animations/waapi.ts",
+      "line": 178,
+      "type": "function"
+    },
+    "fadeOutKeyframes": {
+      "file": "src/animations/waapi.ts",
+      "line": 155,
+      "type": "function"
+    },
+    "failedStatus": {
+      "file": "src/lib/updater.ts",
+      "line": 256,
+      "type": "function"
+    },
+    "Field": {
+      "file": "src/components/ui.tsx",
+      "line": 645,
+      "type": "function"
+    },
+    "FixedPayment": {
+      "file": "src/lib/types.ts",
+      "line": 52,
+      "type": "interface"
+    },
+    "FocusTrap": {
+      "file": "src/components/ui.tsx",
+      "line": 90,
+      "type": "function"
+    },
+    "FONT_SCALES": {
+      "file": "src/lib/constants.ts",
+      "line": 48,
+      "type": "const"
+    },
+    "formatDate": {
+      "file": "src/lib/utils.ts",
+      "line": 54,
+      "type": "function"
+    },
+    "formatDateShort": {
+      "file": "src/lib/utils.ts",
+      "line": 59,
+      "type": "function"
+    },
+    "formatNumber": {
+      "file": "src/lib/utils.ts",
+      "line": 141,
+      "type": "function"
+    },
+    "formatPct": {
+      "file": "src/lib/utils.ts",
+      "line": 159,
+      "type": "function"
+    },
+    "formatSigned": {
+      "file": "src/lib/utils.ts",
+      "line": 154,
+      "type": "function"
+    },
+    "framesFor": {
+      "file": "src/animations/ticker.ts",
+      "line": 140,
+      "type": "function"
+    },
+    "fullSchemaOps": {
+      "file": "src/storage/schema.ts",
+      "line": 272,
+      "type": "function"
+    },
+    "generatePending": {
+      "file": "src/lib/engine.ts",
+      "line": 178,
+      "type": "function"
+    },
+    "getStorage": {
+      "file": "src/storage/index.ts",
+      "line": 42,
+      "type": "function"
+    },
+    "Goal": {
+      "file": "src/lib/types.ts",
+      "line": 70,
+      "type": "interface"
+    },
+    "goalMonthlyNeed": {
+      "file": "src/lib/engine.ts",
+      "line": 1782,
+      "type": "function"
+    },
+    "GoalsView": {
+      "file": "src/views/Planning.tsx",
+      "line": 338,
+      "type": "function"
+    },
+    "GrowthChart": {
+      "file": "src/components/charts.tsx",
+      "line": 236,
+      "type": "function"
+    },
+    "idleStatus": {
+      "file": "src/lib/updater.ts",
+      "line": 241,
+      "type": "function"
+    },
+    "IndexedDbSnapshotStore": {
+      "file": "src/storage/snapshots.ts",
+      "line": 90,
+      "type": "class"
+    },
+    "Investment": {
+      "file": "src/lib/types.ts",
+      "line": 79,
+      "type": "interface"
+    },
+    "Investments": {
+      "file": "src/views/Investments.tsx",
+      "line": 85,
+      "type": "function"
+    },
+    "isActionablePending": {
+      "file": "src/lib/engine.ts",
+      "line": 1759,
+      "type": "function"
+    },
+    "isBetaVersion": {
+      "file": "src/lib/updater.ts",
+      "line": 165,
+      "type": "function"
+    },
+    "isEmptyAppData": {
+      "file": "src/lib/normalize.ts",
+      "line": 73,
+      "type": "function"
+    },
+    "isNewerVersion": {
+      "file": "src/lib/updater.ts",
+      "line": 214,
+      "type": "function"
+    },
+    "isReached": {
+      "file": "src/lib/engine.ts",
+      "line": 1779,
+      "type": "function"
+    },
+    "LEGACY_KEEP_DAYS": {
+      "file": "src/storage/migrate.ts",
+      "line": 17,
+      "type": "const"
+    },
+    "LEGACY_KEYS": {
+      "file": "src/storage/migrate.ts",
+      "line": 20,
+      "type": "const"
+    },
+    "LEGACY_MIGRATED_AT_FLAG": {
+      "file": "src/storage/migrate.ts",
+      "line": 14,
+      "type": "const"
+    },
+    "LEGACY_MIGRATION_FLAG": {
+      "file": "src/storage/migrate.ts",
+      "line": 11,
+      "type": "const"
+    },
+    "legacyBackup": {
+      "file": "src/storage/index.ts",
+      "line": 78,
+      "type": "function"
+    },
+    "legacyBackupStatus": {
+      "file": "src/storage/migrate.ts",
+      "line": 117,
+      "type": "function"
+    },
+    "LegacyBackupStatus#interface": {
+      "file": "src/storage/migrate.ts",
+      "line": 105,
+      "type": "interface"
+    },
+    "LegacySourceOptions": {
+      "file": "src/storage/migrate.ts",
+      "line": 35,
+      "type": "interface"
+    },
+    "LinearMotion": {
+      "file": "src/animations/ticker.ts",
+      "line": 74,
+      "type": "interface"
+    },
+    "LocalStorageSnapshotStore": {
+      "file": "src/storage/snapshots.ts",
+      "line": 215,
+      "type": "class"
+    },
+    "Logo": {
+      "file": "src/components/Logo.tsx",
+      "line": 9,
+      "type": "function"
+    },
+    "LOW_MEMORY_GB": {
+      "file": "src/platform/capabilities.ts",
+      "line": 11,
+      "type": "const"
+    },
+    "MapConfig": {
+      "file": "map.config.ts",
+      "line": 19,
+      "type": "interface"
+    },
+    "MapEntry": {
+      "file": "map.config.ts",
+      "line": 10,
+      "type": "interface"
+    },
+    "MAX_DELTA_MS": {
+      "file": "src/animations/ticker.ts",
+      "line": 8,
+      "type": "const"
+    },
+    "MemorySnapshotStore": {
+      "file": "src/storage/snapshots.ts",
+      "line": 72,
+      "type": "class"
+    },
+    "MemoryStorage": {
+      "file": "src/storage/memory.ts",
+      "line": 20,
+      "type": "class"
+    },
+    "MemoryStorageOptions": {
+      "file": "src/storage/memory.ts",
+      "line": 10,
+      "type": "interface"
+    },
+    "mergeAppData": {
+      "file": "src/lib/normalize.ts",
+      "line": 56,
+      "type": "function"
+    },
+    "mergeData": {
+      "file": "src/lib/storage.ts",
+      "line": 16,
+      "type": "re-export"
+    },
+    "META_SETTINGS_KEY": {
+      "file": "src/storage/schema.ts",
+      "line": 12,
+      "type": "const"
+    },
+    "META_TABLE": {
+      "file": "src/storage/schema.ts",
+      "line": 11,
+      "type": "const"
+    },
+    "META_VERSION_KEY": {
+      "file": "src/storage/schema.ts",
+      "line": 13,
+      "type": "const"
+    },
+    "metaSchemaOps": {
+      "file": "src/storage/schema.ts",
+      "line": 165,
+      "type": "function"
+    },
+    "MID_MEMORY_GB": {
+      "file": "src/platform/capabilities.ts",
+      "line": 12,
+      "type": "const"
+    },
+    "migrateLegacyData": {
+      "file": "src/storage/migrate.ts",
+      "line": 161,
+      "type": "function"
+    },
+    "migrationOps": {
+      "file": "src/storage/schema.ts",
+      "line": 266,
+      "type": "function"
+    },
+    "migrationReport": {
+      "file": "src/storage/index.ts",
+      "line": 69,
+      "type": "function"
+    },
+    "MigrationReport#interface": {
+      "file": "src/storage/migrate.ts",
+      "line": 24,
+      "type": "interface"
+    },
+    "MIGRATIONS": {
+      "file": "src/storage/schema.ts",
+      "line": 258,
+      "type": "const"
+    },
+    "migrationStatus": {
+      "file": "src/storage/index.ts",
+      "line": 73,
+      "type": "function"
+    },
+    "MigrationStatus#type": {
+      "file": "src/storage/migrate.ts",
+      "line": 22,
+      "type": "type"
+    },
+    "MigrationStep": {
+      "file": "src/storage/schema.ts",
+      "line": 248,
+      "type": "interface"
+    },
+    "Modal": {
+      "file": "src/components/ui.tsx",
+      "line": 253,
+      "type": "function"
+    },
+    "monthFull": {
+      "file": "src/lib/utils.ts",
+      "line": 65,
+      "type": "function"
+    },
+    "monthKey": {
+      "file": "src/lib/utils.ts",
+      "line": 34,
+      "type": "function"
+    },
+    "monthLabel": {
+      "file": "src/lib/utils.ts",
+      "line": 64,
+      "type": "function"
+    },
+    "monthsToTarget": {
+      "file": "src/lib/engine.ts",
+      "line": 698,
+      "type": "function"
+    },
+    "monthTotals": {
+      "file": "src/lib/engine.ts",
+      "line": 564,
+      "type": "function"
+    },
+    "MotionPlan": {
+      "file": "src/animations/waapi.ts",
+      "line": 17,
+      "type": "interface"
+    },
+    "MotionPreferences": {
+      "file": "src/animations/waapi.ts",
+      "line": 10,
+      "type": "interface"
+    },
+    "MotionRequest": {
+      "file": "src/animations/waapi.ts",
+      "line": 25,
+      "type": "interface"
+    },
+    "nodeSqlJsLoader": {
+      "file": "tests/helpers/sqljs.ts",
+      "line": 11,
+      "type": "function"
+    },
+    "normalize": {
+      "file": "src/lib/storage.ts",
+      "line": 16,
+      "type": "re-export"
+    },
+    "normalizeAppData": {
+      "file": "src/lib/normalize.ts",
+      "line": 19,
+      "type": "function"
+    },
+    "Onboarding": {
+      "file": "src/components/Onboarding.tsx",
+      "line": 38,
+      "type": "function"
+    },
+    "ONBOARDING_FLAG": {
+      "file": "src/components/Onboarding.tsx",
+      "line": 12,
+      "type": "const"
+    },
+    "openReleasesInBrowser": {
+      "file": "src/platform/webBridge.ts",
+      "line": 123,
+      "type": "function"
+    },
+    "OverlayCloser": {
+      "file": "src/hooks/useOverlayStack.tsx",
+      "line": 26,
+      "type": "type"
+    },
+    "OverlayStackProvider": {
+      "file": "src/hooks/useOverlayStack.tsx",
+      "line": 64,
+      "type": "function"
+    },
+    "OverlayStackValue": {
+      "file": "src/hooks/useOverlayStack.tsx",
+      "line": 28,
+      "type": "interface"
+    },
+    "PAGE_SIZE": {
+      "file": "src/lib/constants.ts",
+      "line": 61,
+      "type": "const"
+    },
+    "PageHeader": {
+      "file": "src/components/ui.tsx",
+      "line": 819,
+      "type": "function"
+    },
+    "parseAmount": {
+      "file": "src/lib/utils.ts",
+      "line": 82,
+      "type": "function"
+    },
+    "parseImport": {
+      "file": "src/lib/storage.ts",
+      "line": 129,
+      "type": "function"
+    },
+    "parseISO": {
+      "file": "src/lib/utils.ts",
+      "line": 12,
+      "type": "function"
+    },
+    "Payments": {
+      "file": "src/views/Payments.tsx",
+      "line": 214,
+      "type": "function"
+    },
+    "PendingKind": {
+      "file": "src/lib/engine.ts",
+      "line": 1748,
+      "type": "type"
+    },
+    "pendingKind#function": {
+      "file": "src/lib/engine.ts",
+      "line": 1750,
+      "type": "function"
+    },
+    "PendingPayment": {
+      "file": "src/lib/types.ts",
+      "line": 88,
+      "type": "interface"
+    },
+    "percentOf": {
+      "file": "src/lib/utils.ts",
+      "line": 163,
+      "type": "function"
+    },
+    "Period": {
+      "file": "src/lib/types.ts",
+      "line": 5,
+      "type": "type"
+    },
+    "PickedFile": {
+      "file": "src/platform/types.ts",
+      "line": 9,
+      "type": "interface"
+    },
+    "pickLatestRelease": {
+      "file": "src/lib/updater.ts",
+      "line": 150,
+      "type": "function"
+    },
+    "platform": {
+      "file": "src/platform/index.ts",
+      "line": 23,
+      "type": "function"
+    },
+    "PlatformBridge": {
+      "file": "src/platform/types.ts",
+      "line": 34,
+      "type": "interface"
+    },
+    "PlatformFeatures": {
+      "file": "src/platform/types.ts",
+      "line": 14,
+      "type": "interface"
+    },
+    "PlatformKind": {
+      "file": "src/platform/types.ts",
+      "line": 7,
+      "type": "type"
+    },
+    "plural": {
+      "file": "src/lib/utils.ts",
+      "line": 72,
+      "type": "function"
+    },
+    "portfolioStats": {
+      "file": "src/lib/engine.ts",
+      "line": 637,
+      "type": "function"
+    },
+    "prefersReducedMotion": {
+      "file": "src/animations/waapi.ts",
+      "line": 64,
+      "type": "function"
+    },
+    "pressPop": {
+      "file": "src/animations/waapi.ts",
+      "line": 202,
+      "type": "function"
+    },
+    "ProgressBar": {
+      "file": "src/components/ui.tsx",
+      "line": 733,
+      "type": "function"
+    },
+    "purgeLegacySource": {
+      "file": "src/storage/migrate.ts",
+      "line": 141,
+      "type": "function"
+    },
+    "READ_META_SQL": {
+      "file": "src/storage/schema.ts",
+      "line": 246,
+      "type": "const"
+    },
+    "readIdsSql": {
+      "file": "src/storage/schema.ts",
+      "line": 236,
+      "type": "function"
+    },
+    "readLegacySource": {
+      "file": "src/storage/migrate.ts",
+      "line": 67,
+      "type": "function"
+    },
+    "readRowsSql": {
+      "file": "src/storage/schema.ts",
+      "line": 235,
+      "type": "function"
+    },
+    "readSymbol": {
+      "file": "src/lib/utils.ts",
+      "line": 136,
+      "type": "function"
+    },
+    "readTextFile": {
+      "file": "src/platform/webBridge.ts",
+      "line": 15,
+      "type": "function"
+    },
+    "ReleaseEntry": {
+      "file": "src/lib/updater.ts",
+      "line": 117,
+      "type": "interface"
+    },
+    "ReleaseInfo": {
+      "file": "src/lib/updater.ts",
+      "line": 126,
+      "type": "interface"
+    },
+    "RELEASES_API_URL": {
+      "file": "src/lib/updater.ts",
+      "line": 114,
+      "type": "const"
+    },
+    "RELEASES_PAGE_URL": {
+      "file": "src/lib/updater.ts",
+      "line": 100,
+      "type": "const"
+    },
+    "resetStorage": {
+      "file": "src/storage/index.ts",
+      "line": 62,
+      "type": "function"
+    },
+    "resolve": {
+      "file": "scripts/bench-storage.mjs",
+      "line": 70,
+      "type": "function"
+    },
+    "resolveMotionPlan": {
+      "file": "src/animations/waapi.ts",
+      "line": 50,
+      "type": "function"
+    },
+    "restoreDeletedPayment": {
+      "file": "src/lib/engine.ts",
+      "line": 1030,
+      "type": "function"
+    },
+    "riseIn": {
+      "file": "src/animations/waapi.ts",
+      "line": 191,
+      "type": "function"
+    },
+    "riseInKeyframes": {
+      "file": "src/animations/waapi.ts",
+      "line": 146,
+      "type": "function"
+    },
+    "sampleData": {
+      "file": "tests/helpers/fixtures.ts",
+      "line": 20,
+      "type": "function"
+    },
+    "scaleProgress": {
+      "file": "src/animations/waapi.ts",
+      "line": 217,
+      "type": "function"
+    },
+    "Scanner": {
+      "file": "src/views/Scanner.tsx",
+      "line": 76,
+      "type": "function"
+    },
+    "SCHEMA_VERSION": {
+      "file": "src/storage/schema.ts",
+      "line": 9,
+      "type": "const"
+    },
+    "Segmented": {
+      "file": "src/components/ui.tsx",
+      "line": 656,
+      "type": "function"
+    },
+    "serializeExport": {
+      "file": "src/lib/storage.ts",
+      "line": 121,
+      "type": "function"
+    },
+    "setAdapterProvider": {
+      "file": "src/lib/storage.ts",
+      "line": 25,
+      "type": "function"
+    },
+    "setMetaOp": {
+      "file": "src/storage/schema.ts",
+      "line": 238,
+      "type": "function"
+    },
+    "Settings": {
+      "file": "src/views/Settings.tsx",
+      "line": 207,
+      "type": "function"
+    },
+    "skipPaymentWithCarry": {
+      "file": "src/lib/engine.ts",
+      "line": 877,
+      "type": "function"
+    },
+    "SkippedPayment": {
+      "file": "src/lib/types.ts",
+      "line": 103,
+      "type": "interface"
+    },
+    "SnapshotKind": {
+      "file": "src/storage/types.ts",
+      "line": 59,
+      "type": "type"
+    },
+    "SnapshotStore": {
+      "file": "src/storage/types.ts",
+      "line": 62,
+      "type": "interface"
+    },
+    "SOURCE_LABELS": {
+      "file": "src/lib/constants.ts",
+      "line": 54,
+      "type": "const"
+    },
+    "SqlDriver": {
+      "file": "src/storage/types.ts",
+      "line": 33,
+      "type": "interface"
+    },
+    "sqliteInitError": {
+      "file": "src/storage/index.ts",
+      "line": 82,
+      "type": "function"
+    },
+    "SqliteSqlDriver": {
+      "file": "src/storage/sqlite.ts",
+      "line": 61,
+      "type": "class"
+    },
+    "SqliteStorage": {
+      "file": "src/storage/sqlite.ts",
+      "line": 200,
+      "type": "class"
+    },
+    "SqliteStorageOptions": {
+      "file": "src/storage/sqlite.ts",
+      "line": 194,
+      "type": "interface"
+    },
+    "SqlJsLoader": {
+      "file": "src/storage/sqlite.ts",
+      "line": 28,
+      "type": "type"
+    },
+    "SqlOp": {
+      "file": "src/storage/types.ts",
+      "line": 24,
+      "type": "interface"
+    },
+    "stagger": {
+      "file": "src/animations/waapi.ts",
+      "line": 257,
+      "type": "function"
+    },
+    "startOfDay": {
+      "file": "src/lib/utils.ts",
+      "line": 16,
+      "type": "function"
+    },
+    "StatusBadge": {
+      "file": "src/components/ui.tsx",
+      "line": 776,
+      "type": "function"
+    },
+    "stepLinear": {
+      "file": "src/animations/ticker.ts",
+      "line": 89,
+      "type": "function"
+    },
+    "STORAGE_KEY": {
+      "file": "src/lib/constants.ts",
+      "line": 10,
+      "type": "const"
+    },
+    "StorageAdapter": {
+      "file": "src/storage/types.ts",
+      "line": 75,
+      "type": "interface"
+    },
+    "StorageDescription": {
+      "file": "src/storage/index.ts",
+      "line": 86,
+      "type": "interface"
+    },
+    "StorageDriverName": {
+      "file": "src/storage/types.ts",
+      "line": 10,
+      "type": "type"
+    },
+    "StorageInfo": {
+      "file": "src/lib/storage.ts",
+      "line": 152,
+      "type": "interface"
+    },
+    "storageInfo#function": {
+      "file": "src/lib/storage.ts",
+      "line": 160,
+      "type": "function"
+    },
+    "storageService": {
+      "file": "src/lib/storage.ts",
+      "line": 42,
+      "type": "const"
+    },
+    "Subscription": {
+      "file": "src/lib/types.ts",
+      "line": 41,
+      "type": "interface"
+    },
+    "Tab": {
+      "file": "src/lib/types.ts",
+      "line": 8,
+      "type": "type"
+    },
+    "TelegramIcon": {
+      "file": "src/components/BrandIcons.tsx",
+      "line": 12,
+      "type": "function"
+    },
+    "Theme": {
+      "file": "src/lib/types.ts",
+      "line": 6,
+      "type": "type"
+    },
+    "THEMES": {
+      "file": "src/lib/constants.ts",
+      "line": 42,
+      "type": "const"
+    },
+    "Ticker": {
+      "file": "src/animations/ticker.ts",
+      "line": 22,
+      "type": "interface"
+    },
+    "TickerHex": {
+      "file": "src/components/ui.tsx",
+      "line": 72,
+      "type": "function"
+    },
+    "TickerHost": {
+      "file": "src/animations/ticker.ts",
+      "line": 10,
+      "type": "interface"
+    },
+    "TickerSpec": {
+      "file": "src/animations/ticker.ts",
+      "line": 28,
+      "type": "interface"
+    },
+    "Toast": {
+      "file": "src/lib/types.ts",
+      "line": 128,
+      "type": "interface"
+    },
+    "ToastHost": {
+      "file": "src/components/ui.tsx",
+      "line": 870,
+      "type": "function"
+    },
+    "todayISO": {
+      "file": "src/lib/utils.ts",
+      "line": 14,
+      "type": "function"
+    },
+    "Toggle": {
+      "file": "src/components/ui.tsx",
+      "line": 718,
+      "type": "function"
+    },
+    "toISO": {
+      "file": "src/lib/utils.ts",
+      "line": 10,
+      "type": "function"
+    },
+    "toSqlValue": {
+      "file": "src/storage/schema.ts",
+      "line": 153,
+      "type": "function"
+    },
+    "totals": {
+      "file": "src/lib/engine.ts",
+      "line": 615,
+      "type": "function"
+    },
+    "Transaction": {
+      "file": "src/lib/types.ts",
+      "line": 19,
+      "type": "interface"
+    },
+    "TransactionInput": {
+      "file": "src/lib/types.ts",
+      "line": 32,
+      "type": "interface"
+    },
+    "TransactionModal": {
+      "file": "src/components/TransactionModal.tsx",
+      "line": 9,
+      "type": "function"
+    },
+    "Transactions": {
+      "file": "src/views/Transactions.tsx",
+      "line": 35,
+      "type": "function"
+    },
+    "TransactionSelection": {
+      "file": "src/components/TransactionSelection.tsx",
+      "line": 25,
+      "type": "function"
+    },
+    "TransactionSelectionProps": {
+      "file": "src/components/TransactionSelection.tsx",
+      "line": 12,
+      "type": "interface"
+    },
+    "tx": {
+      "file": "tests/helpers/fixtures.ts",
+      "line": 6,
+      "type": "function"
+    },
+    "TxModalState": {
+      "file": "src/hooks/AppProvider.tsx",
+      "line": 15,
+      "type": "interface"
+    },
+    "TxSource": {
+      "file": "src/lib/types.ts",
+      "line": 3,
+      "type": "type"
+    },
+    "TxStatus": {
+      "file": "src/lib/types.ts",
+      "line": 4,
+      "type": "type"
+    },
+    "txStatusFromPending": {
+      "file": "src/lib/engine.ts",
+      "line": 1762,
+      "type": "function"
+    },
+    "TxType": {
+      "file": "src/lib/types.ts",
+      "line": 2,
+      "type": "type"
+    },
+    "uid": {
+      "file": "src/lib/utils.ts",
+      "line": 5,
+      "type": "function"
+    },
+    "UpcomingItem": {
+      "file": "src/lib/engine.ts",
+      "line": 321,
+      "type": "interface"
+    },
+    "upcomingPayments": {
+      "file": "src/lib/engine.ts",
+      "line": 332,
+      "type": "function"
+    },
+    "UPDATE_OWNER": {
+      "file": "src/lib/updater.ts",
+      "line": 97,
+      "type": "const"
+    },
+    "UPDATE_REPO": {
+      "file": "src/lib/updater.ts",
+      "line": 98,
+      "type": "const"
+    },
+    "UpdateMode": {
+      "file": "src/lib/updater.ts",
+      "line": 46,
+      "type": "type"
+    },
+    "updateModeNote": {
+      "file": "src/lib/updater.ts",
+      "line": 229,
+      "type": "function"
+    },
+    "UpdatePhase": {
+      "file": "src/lib/updater.ts",
+      "line": 25,
+      "type": "type"
+    },
+    "UpdateProgress": {
+      "file": "src/lib/updater.ts",
+      "line": 55,
+      "type": "interface"
+    },
+    "Updater": {
+      "file": "src/lib/updater.ts",
+      "line": 280,
+      "type": "interface"
+    },
+    "UpdateStatus": {
+      "file": "src/lib/updater.ts",
+      "line": 71,
+      "type": "interface"
+    },
+    "upsertRowOp": {
+      "file": "src/storage/schema.ts",
+      "line": 186,
+      "type": "function"
+    },
+    "upsertRowsOp": {
+      "file": "src/storage/schema.ts",
+      "line": 215,
+      "type": "function"
+    },
+    "upsertSql": {
+      "file": "src/storage/schema.ts",
+      "line": 192,
+      "type": "function"
+    },
+    "useAnimatedNumber": {
+      "file": "src/components/ui.tsx",
+      "line": 1050,
+      "type": "function"
+    },
+    "useApp": {
+      "file": "src/hooks/AppProvider.tsx",
+      "line": 570,
+      "type": "function"
+    },
+    "useCapabilities": {
+      "file": "src/hooks/useCapabilities.ts",
+      "line": 8,
+      "type": "function"
+    },
+    "useFilePick": {
+      "file": "src/components/ui.tsx",
+      "line": 1079,
+      "type": "function"
+    },
+    "useOverlay": {
+      "file": "src/hooks/useOverlayStack.tsx",
+      "line": 155,
+      "type": "function"
+    },
+    "useOverlayStack": {
+      "file": "src/hooks/useOverlayStack.tsx",
+      "line": 125,
+      "type": "function"
+    },
+    "useOverlayVersion": {
+      "file": "src/hooks/useOverlayStack.tsx",
+      "line": 136,
+      "type": "function"
+    },
+    "usePlatformBackButton": {
+      "file": "src/hooks/usePlatformBackButton.ts",
+      "line": 10,
+      "type": "function"
+    },
+    "usePressFeedback": {
+      "file": "src/components/ui.tsx",
+      "line": 241,
+      "type": "function"
+    },
+    "useUpdater": {
+      "file": "src/lib/updater.ts",
+      "line": 302,
+      "type": "function"
+    },
+    "ValueTransitionOptions": {
+      "file": "src/animations/ticker.ts",
+      "line": 103,
+      "type": "interface"
+    },
+    "WASM_INLINE_QUERY": {
+      "file": "vite.shared.ts",
+      "line": 12,
+      "type": "function"
+    },
+    "wasmInlinePlugin": {
+      "file": "vite.shared.ts",
+      "line": 14,
+      "type": "function"
+    },
+    "withCompleteShape": {
+      "file": "src/lib/normalize.ts",
+      "line": 80,
+      "type": "function"
+    }
+  },
+  "data-flow": {
+    "flows": [
+      {
+        "id": "app-start",
+        "note": "Холодный старт приложения.",
+        "steps": [
+          "src/main.tsx → src/App.tsx",
+          "AppProvider → storageService.load",
+          "src/storage/index.ts → createStorageAdapter",
+          "src/storage/sqlite.ts → browserSqlJsLoader (WASM из ?wasm-inline)",
+          "SqliteSqlDriver.open → applySchema (CREATE TABLE/INDEX + SCHEMA_VERSION)",
+          "snapshots.load → db.export() → восстановление БД",
+          "migrateLegacyData (если флаг migration.legacy.v1 не выставлен)",
+          "App → useCapabilities → data-perf на <html>",
+          "App → Onboarding (если нет флага ui.onboarded.v1)"
+        ]
+      },
+      {
+        "id": "write-transaction",
+        "note": "Добавление операции и её попадание на диск.",
+        "steps": [
+          "views/Transactions → модалка новой операции",
+          "AppProvider.addTransaction",
+          "storageService.save (дебаунс)",
+          "SqliteStorage.write → дифф по id → UPSERT (storage/schema.ts:upsertRowOp)",
+          "SqliteSqlDriver.transaction: BEGIN → операции → COMMIT",
+          "persist(): db.export() → SnapshotStore (IndexedDB / файл userData / localStorage)"
+        ]
+      },
+      {
+        "id": "read-list",
+        "note": "Чтение списка операций.",
+        "steps": [
+          "views/Transactions → useApp().data.transactions",
+          "SqliteStorage.read → SELECT по таблицам коллекций",
+          "storage/schema.ts: индексы по дате и категории",
+          "normalize/merge документов → AppData в памяти",
+          "фильтрация и постраничный slice в памяти"
+        ]
+      },
+      {
+        "id": "capabilities-degrade",
+        "note": "Деградация под слабое устройство.",
+        "steps": [
+          "useCapabilities → capabilities.detectCapabilities (RAM, ядра, reduced-motion)",
+          "applyCapabilities → <html data-perf> / data-motion",
+          "waapi.resolveMotionPlan → отключение переходов",
+          "index.css: блоки html[data-perf=low] и html[data-motion=reduced]",
+          "Settings: «Режим графики» показывает выбранный режим"
+        ]
+      },
+      {
+        "id": "export-backup",
+        "note": "Резервная копия в файл.",
+        "steps": [
+          "views/Settings → «Экспорт данных»",
+          "lib/storage.ts: serializeExport",
+          "PlatformBridge.saveFile (в Electron — диалог и запись файла, в web — download)"
+        ]
+      }
+    ],
+    "byArea": [
+      {
+        "from": "src/views",
+        "to": "src/lib",
+        "weight": 25
+      },
+      {
+        "from": "src/components",
+        "to": "src/lib",
+        "weight": 15
+      },
+      {
+        "from": "src/views",
+        "to": "src/components",
+        "weight": 14
+      },
+      {
+        "from": "src/components",
+        "to": "src/hooks",
+        "weight": 9
+      },
+      {
+        "from": "src/views",
+        "to": "src/hooks",
+        "weight": 9
+      },
+      {
+        "from": "src/storage",
+        "to": "src/lib",
+        "weight": 7
+      },
+      {
+        "from": "tests/storage.test.ts",
+        "to": "src/storage",
+        "weight": 6
+      },
+      {
+        "from": "src/platform",
+        "to": "src/lib",
+        "weight": 5
+      },
+      {
+        "from": "src/hooks",
+        "to": "src/lib",
+        "weight": 4
+      },
+      {
+        "from": "tests/storage.test.ts",
+        "to": "src/lib",
+        "weight": 4
+      },
+      {
+        "from": "src/components",
+        "to": "src/animations",
+        "weight": 3
+      },
+      {
+        "from": "src/hooks",
+        "to": "src/platform",
+        "weight": 3
+      },
+      {
+        "from": "src/views",
+        "to": "src/platform",
+        "weight": 3
+      },
+      {
+        "from": "tests/animations.test.ts",
+        "to": "src/animations",
+        "weight": 2
+      },
+      {
+        "from": "tests/helpers",
+        "to": "src/lib",
+        "weight": 2
+      },
+      {
+        "from": "tests/storage.test.ts",
+        "to": "tests/helpers",
+        "weight": 2
+      },
+      {
+        "from": "tests/subscriptions.test.ts",
+        "to": "src/lib",
+        "weight": 2
+      },
+      {
+        "from": "src/animations",
+        "to": "src/platform",
+        "weight": 1
+      },
+      {
+        "from": "src/components",
+        "to": "src/platform",
+        "weight": 1
+      },
+      {
+        "from": "src/components",
+        "to": "src/storage",
+        "weight": 1
+      },
+      {
+        "from": "src/lib",
+        "to": "src/storage",
+        "weight": 1
+      },
+      {
+        "from": "src/lib",
+        "to": "src/platform",
+        "weight": 1
+      },
+      {
+        "from": "src/views",
+        "to": "src/storage",
+        "weight": 1
+      },
+      {
+        "from": "tests/animations.test.ts",
+        "to": "src/platform",
+        "weight": 1
+      },
+      {
+        "from": "tests/helpers",
+        "to": "src/storage",
+        "weight": 1
+      },
+      {
+        "from": "tests/subscriptions.test.ts",
+        "to": "tests/helpers",
+        "weight": 1
+      },
+      {
+        "from": "tests/updater.test.ts",
+        "to": "src/lib",
+        "weight": 1
+      },
+      {
+        "from": "vite.config.ts",
+        "to": "vite.shared.ts",
+        "weight": 1
+      },
+      {
+        "from": "vite.dev.config.ts",
+        "to": "vite.shared.ts",
+        "weight": 1
+      }
+    ],
+    "edges": [
+      {
+        "from": "src/animations/waapi.ts",
+        "to": "src/platform/capabilities.ts",
+        "imports": 1
+      },
+      {
+        "from": "src/components/AppShell.tsx",
+        "to": "src/hooks/AppProvider.tsx",
+        "imports": 1
+      },
+      {
+        "from": "src/components/AppShell.tsx",
+        "to": "src/lib/constants.ts",
+        "imports": 1
+      },
+      {
+        "from": "src/components/AppShell.tsx",
+        "to": "src/lib/engine.ts",
+        "imports": 1
+      },
+      {
+        "from": "src/components/AppShell.tsx",
+        "to": "src/lib/types.ts",
+        "imports": 1
+      },
+      {
+        "from": "src/components/AppShell.tsx",
+        "to": "src/lib/updater.ts",
+        "imports": 1
+      },
+      {
+        "from": "src/components/AppShell.tsx",
+        "to": "src/platform/index.ts",
+        "imports": 1
+      },
+      {
+        "from": "src/components/AppShell.tsx",
+        "to": "src/components/BrandIcons.tsx",
+        "imports": 1
+      },
+      {
+        "from": "src/components/AppShell.tsx",
+        "to": "src/components/ui.tsx",
+        "imports": 1
+      },
+      {
+        "from": "src/components/CameraScanner.tsx",
+        "to": "src/hooks/useOverlayStack.tsx",
+        "imports": 1
+      },
+      {
+        "from": "src/components/CameraScanner.tsx",
+        "to": "src/lib/utils.ts",
+        "imports": 1
+      },
+      {
+        "from": "src/components/CategoryPicker.tsx",
+        "to": "src/animations/waapi.ts",
+        "imports": 1
+      },
+      {
+        "from": "src/components/CategoryPicker.tsx",
+        "to": "src/hooks/useCapabilities.ts",
+        "imports": 1
+      },
+      {
+        "from": "src/components/CategoryPicker.tsx",
+        "to": "src/lib/constants.ts",
+        "imports": 1
+      },
+      {
+        "from": "src/components/CategoryPicker.tsx",
+        "to": "src/lib/types.ts",
+        "imports": 1
+      },
+      {
+        "from": "src/components/CategoryPicker.tsx",
+        "to": "src/components/ui.tsx",
+        "imports": 1
+      },
+      {
+        "from": "src/components/charts.tsx",
+        "to": "src/lib/engine.ts",
+        "imports": 1
+      },
+      {
+        "from": "src/components/charts.tsx",
+        "to": "src/lib/types.ts",
+        "imports": 1
+      },
+      {
+        "from": "src/components/charts.tsx",
+        "to": "src/lib/utils.ts",
+        "imports": 1
+      },
+      {
+        "from": "src/components/DevTools.tsx",
+        "to": "src/hooks/AppProvider.tsx",
+        "imports": 1
+      },
+      {
+        "from": "src/components/Onboarding.tsx",
+        "to": "src/storage/index.ts",
+        "imports": 1
+      },
+      {
+        "from": "src/components/Onboarding.tsx",
+        "to": "src/hooks/useOverlayStack.tsx",
+        "imports": 1
+      },
+      {
+        "from": "src/components/Onboarding.tsx",
+        "to": "src/components/ui.tsx",
+        "imports": 1
+      },
+      {
+        "from": "src/components/TransactionModal.tsx",
+        "to": "src/hooks/AppProvider.tsx",
+        "imports": 1
+      },
+      {
+        "from": "src/components/TransactionModal.tsx",
+        "to": "src/lib/constants.ts",
+        "imports": 1
+      },
+      {
+        "from": "src/components/TransactionModal.tsx",
+        "to": "src/lib/types.ts",
+        "imports": 1
+      },
+      {
+        "from": "src/components/TransactionModal.tsx",
+        "to": "src/lib/utils.ts",
+        "imports": 1
+      },
+      {
+        "from": "src/components/TransactionModal.tsx",
+        "to": "src/components/CategoryPicker.tsx",
+        "imports": 1
+      },
+      {
+        "from": "src/components/TransactionModal.tsx",
+        "to": "src/components/ui.tsx",
+        "imports": 1
+      },
+      {
+        "from": "src/components/TransactionSelection.tsx",
+        "to": "src/components/ui.tsx",
+        "imports": 1
+      },
+      {
+        "from": "src/components/ui.tsx",
+        "to": "src/animations/ticker.ts",
+        "imports": 1
+      },
+      {
+        "from": "src/components/ui.tsx",
+        "to": "src/animations/waapi.ts",
+        "imports": 1
+      },
+      {
+        "from": "src/components/ui.tsx",
+        "to": "src/hooks/useCapabilities.ts",
+        "imports": 1
+      },
+      {
+        "from": "src/components/ui.tsx",
+        "to": "src/hooks/useOverlayStack.tsx",
+        "imports": 1
+      },
+      {
+        "from": "src/components/ui.tsx",
+        "to": "src/hooks/AppProvider.tsx",
+        "imports": 1
+      },
+      {
+        "from": "src/components/ui.tsx",
+        "to": "src/lib/constants.ts",
+        "imports": 1
+      },
+      {
+        "from": "src/components/ui.tsx",
+        "to": "src/lib/types.ts",
+        "imports": 1
+      },
+      {
+        "from": "src/hooks/AppProvider.tsx",
+        "to": "src/lib/engine.ts",
+        "imports": 1
+      },
+      {
+        "from": "src/hooks/AppProvider.tsx",
+        "to": "src/lib/storage.ts",
+        "imports": 1
+      },
+      {
+        "from": "src/hooks/AppProvider.tsx",
+        "to": "src/lib/types.ts",
+        "imports": 1
+      },
+      {
+        "from": "src/hooks/AppProvider.tsx",
+        "to": "src/lib/utils.ts",
+        "imports": 1
+      },
+      {
+        "from": "src/hooks/AppProvider.tsx",
+        "to": "src/platform/index.ts",
+        "imports": 1
+      },
+      {
+        "from": "src/hooks/useCapabilities.ts",
+        "to": "src/platform/capabilities.ts",
+        "imports": 1
+      },
+      {
+        "from": "src/hooks/usePlatformBackButton.ts",
+        "to": "src/platform/index.ts",
+        "imports": 1
+      },
+      {
+        "from": "src/lib/constants.ts",
+        "to": "src/lib/types.ts",
+        "imports": 1
+      },
+      {
+        "from": "src/lib/electronApi.ts",
+        "to": "src/lib/updater.ts",
+        "imports": 1
+      },
+      {
+        "from": "src/lib/engine.ts",
+        "to": "src/lib/types.ts",
+        "imports": 1
+      },
+      {
+        "from": "src/lib/engine.ts",
+        "to": "src/lib/utils.ts",
+        "imports": 1
+      },
+      {
+        "from": "src/lib/normalize.ts",
+        "to": "src/lib/engine.ts",
+        "imports": 1
+      },
+      {
+        "from": "src/lib/normalize.ts",
+        "to": "src/lib/types.ts",
+        "imports": 1
+      },
+      {
+        "from": "src/lib/storage.ts",
+        "to": "src/lib/engine.ts",
+        "imports": 1
+      },
+      {
+        "from": "src/lib/storage.ts",
+        "to": "src/lib/types.ts",
+        "imports": 1
+      },
+      {
+        "from": "src/lib/storage.ts",
+        "to": "src/storage/index.ts",
+        "imports": 1
+      },
+      {
+        "from": "src/lib/storage.ts",
+        "to": "src/lib/normalize.ts",
+        "imports": 1
+      },
+      {
+        "from": "src/lib/updater.ts",
+        "to": "src/platform/types.ts",
+        "imports": 1
+      },
+      {
+        "from": "src/lib/utils.ts",
+        "to": "src/lib/constants.ts",
+        "imports": 1
+      },
+      {
+        "from": "src/lib/utils.ts",
+        "to": "src/lib/types.ts",
+        "imports": 1
+      },
+      {
+        "from": "src/platform/android/capacitorBridge.ts",
+        "to": "src/lib/updater.ts",
+        "imports": 1
+      },
+      {
+        "from": "src/platform/android/capacitorBridge.ts",
+        "to": "src/platform/webBridge.ts",
+        "imports": 1
+      },
+      {
+        "from": "src/platform/android/capacitorBridge.ts",
+        "to": "src/platform/types.ts",
+        "imports": 1
+      },
+      {
+        "from": "src/platform/index.ts",
+        "to": "src/platform/android/capacitorBridge.ts",
+        "imports": 1
+      },
+      {
+        "from": "src/platform/index.ts",
+        "to": "src/platform/types.ts",
+        "imports": 1
+      },
+      {
+        "from": "src/platform/index.ts",
+        "to": "src/platform/webBridge.ts",
+        "imports": 1
+      },
+      {
+        "from": "src/platform/index.ts",
+        "to": "src/platform/windows/electronBridge.ts",
+        "imports": 1
+      },
+      {
+        "from": "src/platform/index.ts",
+        "to": "src/platform/capabilities.ts",
+        "imports": 1
+      },
+      {
+        "from": "src/platform/types.ts",
+        "to": "src/lib/updater.ts",
+        "imports": 1
+      },
+      {
+        "from": "src/platform/webBridge.ts",
+        "to": "src/lib/constants.ts",
+        "imports": 1
+      },
+      {
+        "from": "src/platform/webBridge.ts",
+        "to": "src/lib/updater.ts",
+        "imports": 1
+      },
+      {
+        "from": "src/platform/webBridge.ts",
+        "to": "src/platform/types.ts",
+        "imports": 1
+      },
+      {
+        "from": "src/platform/windows/electronBridge.ts",
+        "to": "src/lib/updater.ts",
+        "imports": 1
+      },
+      {
+        "from": "src/platform/windows/electronBridge.ts",
+        "to": "src/platform/webBridge.ts",
+        "imports": 1
+      },
+      {
+        "from": "src/platform/windows/electronBridge.ts",
+        "to": "src/platform/types.ts",
+        "imports": 1
+      },
+      {
+        "from": "src/storage/index.ts",
+        "to": "src/storage/memory.ts",
+        "imports": 1
+      },
+      {
+        "from": "src/storage/index.ts",
+        "to": "src/storage/migrate.ts",
+        "imports": 1
+      },
+      {
+        "from": "src/storage/index.ts",
+        "to": "src/storage/snapshots.ts",
+        "imports": 1
+      },
+      {
+        "from": "src/storage/index.ts",
+        "to": "src/storage/sqlite.ts",
+        "imports": 1
+      },
+      {
+        "from": "src/storage/index.ts",
+        "to": "src/storage/types.ts",
+        "imports": 1
+      },
+      {
+        "from": "src/storage/index.ts",
+        "to": "src/storage/schema.ts",
+        "imports": 1
+      },
+      {
+        "from": "src/storage/memory.ts",
+        "to": "src/lib/engine.ts",
+        "imports": 1
+      },
+      {
+        "from": "src/storage/memory.ts",
+        "to": "src/lib/types.ts",
+        "imports": 1
+      },
+      {
+        "from": "src/storage/memory.ts",
+        "to": "src/storage/schema.ts",
+        "imports": 1
+      },
+      {
+        "from": "src/storage/memory.ts",
+        "to": "src/storage/types.ts",
+        "imports": 1
+      },
+      {
+        "from": "src/storage/migrate.ts",
+        "to": "src/lib/constants.ts",
+        "imports": 1
+      },
+      {
+        "from": "src/storage/migrate.ts",
+        "to": "src/lib/normalize.ts",
+        "imports": 1
+      },
+      {
+        "from": "src/storage/migrate.ts",
+        "to": "src/storage/types.ts",
+        "imports": 1
+      },
+      {
+        "from": "src/storage/schema.ts",
+        "to": "src/storage/types.ts",
+        "imports": 1
+      },
+      {
+        "from": "src/storage/snapshots.ts",
+        "to": "src/storage/types.ts",
+        "imports": 1
+      },
+      {
+        "from": "src/storage/sqlite.ts",
+        "to": "src/lib/engine.ts",
+        "imports": 1
+      },
+      {
+        "from": "src/storage/sqlite.ts",
+        "to": "src/lib/types.ts",
+        "imports": 1
+      },
+      {
+        "from": "src/storage/sqlite.ts",
+        "to": "src/storage/migrate.ts",
+        "imports": 1
+      },
+      {
+        "from": "src/storage/sqlite.ts",
+        "to": "src/storage/schema.ts",
+        "imports": 1
+      },
+      {
+        "from": "src/storage/sqlite.ts",
+        "to": "src/storage/types.ts",
+        "imports": 1
+      },
+      {
+        "from": "src/storage/sqlite.ts",
+        "to": "src/storage/wasmAsset.ts",
+        "imports": 1
+      },
+      {
+        "from": "src/storage/types.ts",
+        "to": "src/lib/types.ts",
+        "imports": 1
+      },
+      {
+        "from": "src/views/Dashboard.tsx",
+        "to": "src/hooks/AppProvider.tsx",
+        "imports": 1
+      },
+      {
+        "from": "src/views/Dashboard.tsx",
+        "to": "src/components/charts.tsx",
+        "imports": 1
+      },
+      {
+        "from": "src/views/Dashboard.tsx",
+        "to": "src/components/ui.tsx",
+        "imports": 1
+      },
+      {
+        "from": "src/views/Dashboard.tsx",
+        "to": "src/lib/engine.ts",
+        "imports": 1
+      },
+      {
+        "from": "src/views/Dashboard.tsx",
+        "to": "src/lib/constants.ts",
+        "imports": 1
+      },
+      {
+        "from": "src/views/Dashboard.tsx",
+        "to": "src/lib/types.ts",
+        "imports": 1
+      },
+      {
+        "from": "src/views/Dashboard.tsx",
+        "to": "src/lib/utils.ts",
+        "imports": 1
+      },
+      {
+        "from": "src/views/Investments.tsx",
+        "to": "src/hooks/AppProvider.tsx",
+        "imports": 1
+      },
+      {
+        "from": "src/views/Investments.tsx",
+        "to": "src/components/charts.tsx",
+        "imports": 1
+      },
+      {
+        "from": "src/views/Investments.tsx",
+        "to": "src/components/ui.tsx",
+        "imports": 1
+      },
+      {
+        "from": "src/views/Investments.tsx",
+        "to": "src/lib/engine.ts",
+        "imports": 1
+      },
+      {
+        "from": "src/views/Investments.tsx",
+        "to": "src/lib/types.ts",
+        "imports": 1
+      },
+      {
+        "from": "src/views/Investments.tsx",
+        "to": "src/lib/utils.ts",
+        "imports": 1
+      },
+      {
+        "from": "src/views/Payments.tsx",
+        "to": "src/hooks/AppProvider.tsx",
+        "imports": 1
+      },
+      {
+        "from": "src/views/Payments.tsx",
+        "to": "src/components/ui.tsx",
+        "imports": 1
+      },
+      {
+        "from": "src/views/Payments.tsx",
+        "to": "src/lib/constants.ts",
+        "imports": 1
+      },
+      {
+        "from": "src/views/Payments.tsx",
+        "to": "src/components/CategoryPicker.tsx",
+        "imports": 1
+      },
+      {
+        "from": "src/views/Payments.tsx",
+        "to": "src/lib/engine.ts",
+        "imports": 1
+      },
+      {
+        "from": "src/views/Payments.tsx",
+        "to": "src/lib/types.ts",
+        "imports": 1
+      },
+      {
+        "from": "src/views/Payments.tsx",
+        "to": "src/lib/utils.ts",
+        "imports": 1
+      },
+      {
+        "from": "src/views/Planning.tsx",
+        "to": "src/hooks/AppProvider.tsx",
+        "imports": 1
+      },
+      {
+        "from": "src/views/Planning.tsx",
+        "to": "src/components/ui.tsx",
+        "imports": 1
+      },
+      {
+        "from": "src/views/Planning.tsx",
+        "to": "src/lib/engine.ts",
+        "imports": 1
+      },
+      {
+        "from": "src/views/Planning.tsx",
+        "to": "src/lib/constants.ts",
+        "imports": 1
+      },
+      {
+        "from": "src/views/Planning.tsx",
+        "to": "src/components/CategoryPicker.tsx",
+        "imports": 1
+      },
+      {
+        "from": "src/views/Planning.tsx",
+        "to": "src/lib/types.ts",
+        "imports": 1
+      },
+      {
+        "from": "src/views/Planning.tsx",
+        "to": "src/lib/utils.ts",
+        "imports": 1
+      },
+      {
+        "from": "src/views/Scanner.tsx",
+        "to": "src/hooks/AppProvider.tsx",
+        "imports": 1
+      },
+      {
+        "from": "src/views/Scanner.tsx",
+        "to": "src/components/ui.tsx",
+        "imports": 1
+      },
+      {
+        "from": "src/views/Scanner.tsx",
+        "to": "src/components/CameraScanner.tsx",
+        "imports": 1
+      },
+      {
+        "from": "src/views/Scanner.tsx",
+        "to": "src/components/CategoryPicker.tsx",
+        "imports": 1
+      },
+      {
+        "from": "src/views/Scanner.tsx",
+        "to": "src/lib/utils.ts",
+        "imports": 1
+      },
+      {
+        "from": "src/views/Settings.tsx",
+        "to": "src/hooks/AppProvider.tsx",
+        "imports": 1
+      },
+      {
+        "from": "src/views/Settings.tsx",
+        "to": "src/hooks/useCapabilities.ts",
+        "imports": 1
+      },
+      {
+        "from": "src/views/Settings.tsx",
+        "to": "src/components/ui.tsx",
+        "imports": 1
+      },
+      {
+        "from": "src/views/Settings.tsx",
+        "to": "src/lib/constants.ts",
+        "imports": 1
+      },
+      {
+        "from": "src/views/Settings.tsx",
+        "to": "src/lib/utils.ts",
+        "imports": 1
+      },
+      {
+        "from": "src/views/Settings.tsx",
+        "to": "src/lib/storage.ts",
+        "imports": 1
+      },
+      {
+        "from": "src/views/Settings.tsx",
+        "to": "src/storage/index.ts",
+        "imports": 1
+      },
+      {
+        "from": "src/views/Settings.tsx",
+        "to": "src/platform/capabilities.ts",
+        "imports": 1
+      },
+      {
+        "from": "src/views/Settings.tsx",
+        "to": "src/platform/index.ts",
+        "imports": 1
+      },
+      {
+        "from": "src/views/Settings.tsx",
+        "to": "src/lib/updater.ts",
+        "imports": 1
+      },
+      {
+        "from": "src/views/Settings.tsx",
+        "to": "src/platform/types.ts",
+        "imports": 1
+      },
+      {
+        "from": "src/views/Settings.tsx",
+        "to": "src/lib/types.ts",
+        "imports": 1
+      },
+      {
+        "from": "src/views/Transactions.tsx",
+        "to": "src/hooks/AppProvider.tsx",
+        "imports": 1
+      },
+      {
+        "from": "src/views/Transactions.tsx",
+        "to": "src/hooks/useOverlayStack.tsx",
+        "imports": 1
+      },
+      {
+        "from": "src/views/Transactions.tsx",
+        "to": "src/components/ui.tsx",
+        "imports": 1
+      },
+      {
+        "from": "src/views/Transactions.tsx",
+        "to": "src/components/TransactionSelection.tsx",
+        "imports": 1
+      },
+      {
+        "from": "src/views/Transactions.tsx",
+        "to": "src/lib/engine.ts",
+        "imports": 1
+      },
+      {
+        "from": "src/views/Transactions.tsx",
+        "to": "src/lib/constants.ts",
+        "imports": 1
+      },
+      {
+        "from": "src/views/Transactions.tsx",
+        "to": "src/lib/types.ts",
+        "imports": 1
+      },
+      {
+        "from": "src/views/Transactions.tsx",
+        "to": "src/lib/utils.ts",
+        "imports": 1
+      },
+      {
+        "from": "tests/animations.test.ts",
+        "to": "src/animations/ticker.ts",
+        "imports": 1
+      },
+      {
+        "from": "tests/animations.test.ts",
+        "to": "src/animations/waapi.ts",
+        "imports": 1
+      },
+      {
+        "from": "tests/animations.test.ts",
+        "to": "src/platform/capabilities.ts",
+        "imports": 1
+      },
+      {
+        "from": "tests/helpers/fixtures.ts",
+        "to": "src/lib/engine.ts",
+        "imports": 1
+      },
+      {
+        "from": "tests/helpers/fixtures.ts",
+        "to": "src/lib/types.ts",
+        "imports": 1
+      },
+      {
+        "from": "tests/helpers/sqljs.ts",
+        "to": "src/storage/sqlite.ts",
+        "imports": 1
+      },
+      {
+        "from": "tests/storage.test.ts",
+        "to": "src/lib/engine.ts",
+        "imports": 1
+      },
+      {
+        "from": "tests/storage.test.ts",
+        "to": "src/lib/normalize.ts",
+        "imports": 1
+      },
+      {
+        "from": "tests/storage.test.ts",
+        "to": "src/lib/storage.ts",
+        "imports": 1
+      },
+      {
+        "from": "tests/storage.test.ts",
+        "to": "src/lib/types.ts",
+        "imports": 1
+      },
+      {
+        "from": "tests/storage.test.ts",
+        "to": "src/storage/index.ts",
+        "imports": 1
+      },
+      {
+        "from": "tests/storage.test.ts",
+        "to": "src/storage/memory.ts",
+        "imports": 1
+      },
+      {
+        "from": "tests/storage.test.ts",
+        "to": "src/storage/migrate.ts",
+        "imports": 1
+      },
+      {
+        "from": "tests/storage.test.ts",
+        "to": "src/storage/schema.ts",
+        "imports": 1
+      },
+      {
+        "from": "tests/storage.test.ts",
+        "to": "src/storage/snapshots.ts",
+        "imports": 1
+      },
+      {
+        "from": "tests/storage.test.ts",
+        "to": "src/storage/sqlite.ts",
+        "imports": 1
+      },
+      {
+        "from": "tests/storage.test.ts",
+        "to": "tests/helpers/fixtures.ts",
+        "imports": 1
+      },
+      {
+        "from": "tests/storage.test.ts",
+        "to": "tests/helpers/sqljs.ts",
+        "imports": 1
+      },
+      {
+        "from": "tests/subscriptions.test.ts",
+        "to": "src/lib/engine.ts",
+        "imports": 1
+      },
+      {
+        "from": "tests/subscriptions.test.ts",
+        "to": "src/lib/types.ts",
+        "imports": 1
+      },
+      {
+        "from": "tests/subscriptions.test.ts",
+        "to": "tests/helpers/fixtures.ts",
+        "imports": 1
+      },
+      {
+        "from": "tests/updater.test.ts",
+        "to": "src/lib/updater.ts",
+        "imports": 1
+      },
+      {
+        "from": "vite.config.ts",
+        "to": "vite.shared.ts",
+        "imports": 1
+      },
+      {
+        "from": "vite.dev.config.ts",
+        "to": "vite.shared.ts",
+        "imports": 1
+      }
+    ]
+  },
+  "task-history": {
+    "note": "Заполняется вручную в map.config.ts (поле taskHistory) по мере крупных задач.",
+    "items": [
+      {
+        "task": "storage-migration",
+        "status": "done",
+        "note": "localStorage → SQLite (sql.js), миграция в одной транзакции, откат, снапшоты.",
+        "files": [
+          "src/storage/types.ts",
+          "src/storage/schema.ts",
+          "src/storage/sqlite.ts",
+          "src/storage/snapshots.ts",
+          "src/storage/memory.ts",
+          "src/storage/migrate.ts",
+          "src/storage/index.ts",
+          "src/lib/normalize.ts",
+          "src/lib/storage.ts",
+          "electron-main.cjs",
+          "preload.cjs"
+        ]
+      },
+      {
+        "task": "animation-delta-time",
+        "status": "done",
+        "note": "Ticker с delta-time, перевод width/top на transform, деградация по data-perf.",
+        "files": [
+          "src/animations/ticker.ts",
+          "src/animations/waapi.ts",
+          "src/components/ui.tsx",
+          "src/index.css"
+        ]
+      },
+      {
+        "task": "platform-bridges",
+        "status": "in-progress",
+        "note": "Контракты PlatformBridge и три моста готовы; Tauri/RN требуют внешнего тулчейна (Rust, Android SDK).",
+        "files": [
+          "src/platform/types.ts",
+          "src/platform/index.ts",
+          "src/platform/webBridge.ts",
+          "src/platform/windows/electronBridge.ts",
+          "src/platform/android/capacitorBridge.ts",
+          "src/platform/capabilities.ts"
+        ]
+      },
+      {
+        "task": "subscriptions-deletion",
+        "status": "done",
+        "note": "Удаление операций из подписок больше не возвращает их к подтверждению; платежи следующего месяца не требуют подтверждения заранее.",
+        "files": [
+          "src/lib/engine.ts",
+          "src/hooks/AppProvider.tsx",
+          "src/views/Payments.tsx",
+          "src/views/Transactions.tsx",
+          "tests/subscriptions.test.ts"
+        ]
+      },
+      {
+        "task": "project-map",
+        "status": "done",
+        "note": "Генератор карты: модули, символы, потоки данных, история задач.",
+        "files": [
+          "map.config.ts",
+          "scripts/generate-project-map.mjs",
+          "project-map.json"
+        ]
+      }
+    ]
+  },
+  "files": [
+    {
+      "path": "src/lib/engine.ts",
+      "bytes": 50253,
+      "lines": 1792,
+      "layer": "infra",
+      "depends-on": [
+        "src/lib/types.ts",
+        "src/lib/utils.ts"
+      ]
+    },
+    {
+      "path": "src/components/ui.tsx",
+      "bytes": 52317,
+      "lines": 1089,
+      "layer": "infra",
+      "depends-on": [
+        "src/animations/ticker.ts",
+        "src/animations/waapi.ts",
+        "src/hooks/AppProvider.tsx",
+        "src/hooks/useCapabilities.ts",
+        "src/hooks/useOverlayStack.tsx",
+        "src/lib/constants.ts"
+      ]
+    },
+    {
+      "path": "scripts/publish-release.mjs",
+      "bytes": 55711,
+      "lines": 1079,
+      "layer": "infra",
+      "depends-on": []
+    },
+    {
+      "path": "electron-main.cjs",
+      "bytes": 50994,
+      "lines": 969,
+      "layer": "infra",
+      "depends-on": []
+    },
+    {
+      "path": "docs/Выполнение-ТЗ.md",
+      "bytes": 99802,
+      "lines": 851,
+      "layer": "infra",
+      "depends-on": []
+    },
+    {
+      "path": "tests/storage.test.ts",
+      "bytes": 32998,
+      "lines": 763,
+      "layer": "test",
+      "depends-on": [
+        "src/lib/engine.ts",
+        "src/lib/normalize.ts",
+        "src/lib/storage.ts",
+        "src/lib/types.ts",
+        "src/storage/index.ts",
+        "src/storage/memory.ts"
+      ]
+    },
+    {
+      "path": "src/views/Payments.tsx",
+      "bytes": 32933,
+      "lines": 634,
+      "layer": "infra",
+      "depends-on": [
+        "src/components/CategoryPicker.tsx",
+        "src/components/ui.tsx",
+        "src/hooks/AppProvider.tsx",
+        "src/lib/constants.ts",
+        "src/lib/engine.ts",
+        "src/lib/types.ts"
+      ]
+    },
+    {
+      "path": "docs/Разработка.md",
+      "bytes": 88349,
+      "lines": 630,
+      "layer": "infra",
+      "depends-on": []
+    },
+    {
+      "path": "docs/Решение-проблем.md",
+      "bytes": 117325,
+      "lines": 618,
+      "layer": "infra",
+      "depends-on": []
+    },
+    {
+      "path": "src/storage/sqlite.ts",
+      "bytes": 23966,
+      "lines": 598,
+      "layer": "storage",
+      "depends-on": [
+        "src/lib/engine.ts",
+        "src/lib/types.ts",
+        "src/storage/migrate.ts",
+        "src/storage/schema.ts",
+        "src/storage/types.ts",
+        "src/storage/wasmAsset.ts"
+      ]
+    },
+    {
+      "path": "src/hooks/AppProvider.tsx",
+      "bytes": 24913,
+      "lines": 574,
+      "layer": "state",
+      "depends-on": [
+        "src/lib/engine.ts",
+        "src/lib/storage.ts",
+        "src/lib/types.ts",
+        "src/lib/utils.ts",
+        "src/platform/index.ts"
+      ]
+    },
+    {
+      "path": "docs/Архитектура.md",
+      "bytes": 100925,
+      "lines": 553,
+      "layer": "infra",
+      "depends-on": []
+    },
+    {
+      "path": "scripts/bench-storage.mjs",
+      "bytes": 24079,
+      "lines": 536,
+      "layer": "infra",
+      "depends-on": []
+    },
+    {
+      "path": "src/platform/android/capacitorBridge.ts",
+      "bytes": 31417,
+      "lines": 521,
+      "layer": "platform",
+      "depends-on": [
+        "src/lib/updater.ts",
+        "src/platform/types.ts",
+        "src/platform/webBridge.ts"
+      ]
+    },
+    {
+      "path": "src/views/Settings.tsx",
+      "bytes": 26936,
+      "lines": 518,
+      "layer": "ui",
+      "depends-on": [
+        "src/components/ui.tsx",
+        "src/hooks/AppProvider.tsx",
+        "src/hooks/useCapabilities.ts",
+        "src/lib/constants.ts",
+        "src/lib/storage.ts",
+        "src/lib/types.ts"
+      ]
+    },
+    {
+      "path": "scripts/check-file-protocol.mjs",
+      "bytes": 30620,
+      "lines": 501,
+      "layer": "infra",
+      "depends-on": []
+    },
+    {
+      "path": "src/views/Transactions.tsx",
+      "bytes": 24609,
+      "lines": 483,
+      "layer": "infra",
+      "depends-on": [
+        "src/components/TransactionSelection.tsx",
+        "src/components/ui.tsx",
+        "src/hooks/AppProvider.tsx",
+        "src/hooks/useOverlayStack.tsx",
+        "src/lib/constants.ts",
+        "src/lib/engine.ts"
+      ]
+    },
+    {
+      "path": "scripts/check-desktop-db.mjs",
+      "bytes": 24605,
+      "lines": 465,
+      "layer": "infra",
+      "depends-on": []
+    },
+    {
+      "path": "src/views/Planning.tsx",
+      "bytes": 24397,
+      "lines": 451,
+      "layer": "infra",
+      "depends-on": [
+        "src/components/CategoryPicker.tsx",
+        "src/components/ui.tsx",
+        "src/hooks/AppProvider.tsx",
+        "src/lib/constants.ts",
+        "src/lib/engine.ts",
+        "src/lib/types.ts"
+      ]
+    },
+    {
+      "path": "map.config.ts",
+      "bytes": 21320,
+      "lines": 448,
+      "layer": "infra",
+      "depends-on": []
+    },
+    {
+      "path": "scripts/build-android.mjs",
+      "bytes": 19676,
+      "lines": 402,
+      "layer": "infra",
+      "depends-on": []
+    },
+    {
+      "path": "src/components/AppShell.tsx",
+      "bytes": 19815,
+      "lines": 383,
+      "layer": "infra",
+      "depends-on": [
+        "src/components/BrandIcons.tsx",
+        "src/components/ui.tsx",
+        "src/hooks/AppProvider.tsx",
+        "src/lib/constants.ts",
+        "src/lib/engine.ts",
+        "src/lib/types.ts"
+      ]
+    },
+    {
+      "path": "src/lib/updater.ts",
+      "bytes": 20692,
+      "lines": 373,
+      "layer": "infra",
+      "depends-on": [
+        "src/platform/types.ts"
+      ]
+    },
+    {
+      "path": "src/views/Scanner.tsx",
+      "bytes": 14983,
+      "lines": 362,
+      "layer": "infra",
+      "depends-on": [
+        "src/components/CameraScanner.tsx",
+        "src/components/CategoryPicker.tsx",
+        "src/components/ui.tsx",
+        "src/hooks/AppProvider.tsx",
+        "src/lib/utils.ts"
+      ]
+    },
+    {
+      "path": "src/components/charts.tsx",
+      "bytes": 19224,
+      "lines": 358,
+      "layer": "infra",
+      "depends-on": [
+        "src/lib/engine.ts",
+        "src/lib/types.ts",
+        "src/lib/utils.ts"
+      ]
+    },
+    {
+      "path": "scripts/generate-project-map.mjs",
+      "bytes": 15019,
+      "lines": 351,
+      "layer": "infra",
+      "depends-on": []
+    },
+    {
+      "path": "src/views/Investments.tsx",
+      "bytes": 18626,
+      "lines": 330,
+      "layer": "infra",
+      "depends-on": [
+        "src/components/charts.tsx",
+        "src/components/ui.tsx",
+        "src/hooks/AppProvider.tsx",
+        "src/lib/engine.ts",
+        "src/lib/types.ts",
+        "src/lib/utils.ts"
+      ]
+    },
+    {
+      "path": "src/views/Dashboard.tsx",
+      "bytes": 17638,
+      "lines": 329,
+      "layer": "infra",
+      "depends-on": [
+        "src/components/charts.tsx",
+        "src/components/ui.tsx",
+        "src/hooks/AppProvider.tsx",
+        "src/lib/constants.ts",
+        "src/lib/engine.ts",
+        "src/lib/types.ts"
+      ]
+    },
+    {
+      "path": "docs/Лицензирование.md",
+      "bytes": 30801,
+      "lines": 312,
+      "layer": "infra",
+      "depends-on": []
+    },
+    {
+      "path": "src/storage/snapshots.ts",
+      "bytes": 12095,
+      "lines": 287,
+      "layer": "storage",
+      "depends-on": [
+        "src/storage/types.ts"
+      ]
+    },
+    {
+      "path": "src/components/CameraScanner.tsx",
+      "bytes": 9987,
+      "lines": 285,
+      "layer": "infra",
+      "depends-on": [
+        "src/hooks/useOverlayStack.tsx",
+        "src/lib/utils.ts"
+      ]
+    },
+    {
+      "path": "src/animations/waapi.ts",
+      "bytes": 14772,
+      "lines": 279,
+      "layer": "state",
+      "depends-on": [
+        "src/platform/capabilities.ts"
+      ]
+    },
+    {
+      "path": "src/storage/schema.ts",
+      "bytes": 10995,
+      "lines": 277,
+      "layer": "storage",
+      "depends-on": [
+        "src/storage/types.ts"
+      ]
+    },
+    {
+      "path": "scripts/check-docs.mjs",
+      "bytes": 13442,
+      "lines": 272,
+      "layer": "infra",
+      "depends-on": []
+    },
+    {
+      "path": "src/storage/migrate.ts",
+      "bytes": 9505,
+      "lines": 250,
+      "layer": "storage",
+      "depends-on": [
+        "src/lib/constants.ts",
+        "src/lib/normalize.ts",
+        "src/storage/types.ts"
+      ]
+    },
+    {
+      "path": "tests/animations.test.ts",
+      "bytes": 7892,
+      "lines": 210,
+      "layer": "test",
+      "depends-on": [
+        "src/animations/ticker.ts",
+        "src/animations/waapi.ts",
+        "src/platform/capabilities.ts"
+      ]
+    },
+    {
+      "path": "tests/subscriptions.test.ts",
+      "bytes": 9908,
+      "lines": 207,
+      "layer": "test",
+      "depends-on": [
+        "src/lib/engine.ts",
+        "src/lib/types.ts",
+        "tests/helpers/fixtures.ts"
+      ]
+    },
+    {
+      "path": "src/lib/utils.ts",
+      "bytes": 7081,
+      "lines": 179,
+      "layer": "infra",
+      "depends-on": [
+        "src/lib/constants.ts",
+        "src/lib/types.ts"
+      ]
+    },
+    {
+      "path": "src/lib/storage.ts",
+      "bytes": 6816,
+      "lines": 173,
+      "layer": "storage",
+      "depends-on": [
+        "src/lib/engine.ts",
+        "src/lib/normalize.ts",
+        "src/lib/types.ts",
+        "src/storage/index.ts"
+      ]
+    },
+    {
+      "path": "src/hooks/useOverlayStack.tsx",
+      "bytes": 10908,
+      "lines": 166,
+      "layer": "infra",
+      "depends-on": []
+    },
+    {
+      "path": "src/storage/index.ts",
+      "bytes": 6435,
+      "lines": 154,
+      "layer": "storage",
+      "depends-on": [
+        "src/storage/memory.ts",
+        "src/storage/migrate.ts",
+        "src/storage/schema.ts",
+        "src/storage/snapshots.ts",
+        "src/storage/sqlite.ts",
+        "src/storage/types.ts"
+      ]
+    },
+    {
+      "path": "src/animations/ticker.ts",
+      "bytes": 5373,
+      "lines": 149,
+      "layer": "state",
+      "depends-on": []
+    },
+    {
+      "path": "src/storage/memory.ts",
+      "bytes": 4953,
+      "lines": 142,
+      "layer": "storage",
+      "depends-on": [
+        "src/lib/engine.ts",
+        "src/lib/types.ts",
+        "src/storage/schema.ts",
+        "src/storage/types.ts"
+      ]
+    },
+    {
+      "path": "src/lib/types.ts",
+      "bytes": 2834,
+      "lines": 141,
+      "layer": "infra",
+      "depends-on": []
+    },
+    {
+      "path": "src/components/TransactionModal.tsx",
+      "bytes": 5136,
+      "lines": 137,
+      "layer": "infra",
+      "depends-on": [
+        "src/components/CategoryPicker.tsx",
+        "src/components/ui.tsx",
+        "src/hooks/AppProvider.tsx",
+        "src/lib/constants.ts",
+        "src/lib/types.ts",
+        "src/lib/utils.ts"
+      ]
+    },
+    {
+      "path": "src/platform/webBridge.ts",
+      "bytes": 5792,
+      "lines": 134,
+      "layer": "infra",
+      "depends-on": [
+        "src/lib/constants.ts",
+        "src/lib/updater.ts",
+        "src/platform/types.ts"
+      ]
+    },
+    {
+      "path": "src/components/Onboarding.tsx",
+      "bytes": 5565,
+      "lines": 133,
+      "layer": "ui",
+      "depends-on": [
+        "src/components/ui.tsx",
+        "src/hooks/useOverlayStack.tsx",
+        "src/storage/index.ts"
+      ]
+    },
+    {
+      "path": "src/components/CategoryPicker.tsx",
+      "bytes": 4566,
+      "lines": 126,
+      "layer": "ui",
+      "depends-on": [
+        "src/animations/waapi.ts",
+        "src/components/ui.tsx",
+        "src/hooks/useCapabilities.ts",
+        "src/lib/constants.ts",
+        "src/lib/types.ts"
+      ]
+    },
+    {
+      "path": "vite.config.ts",
+      "bytes": 7251,
+      "lines": 120,
+      "layer": "infra",
+      "depends-on": [
+        "vite.shared.ts"
+      ]
+    },
+    {
+      "path": "scripts/check-update-deps.mjs",
+      "bytes": 5472,
+      "lines": 112,
+      "layer": "infra",
+      "depends-on": []
+    },
+    {
+      "path": "scripts/build-windows.mjs",
+      "bytes": 6544,
+      "lines": 111,
+      "layer": "infra",
+      "depends-on": []
+    },
+    {
+      "path": "src/platform/windows/electronBridge.ts",
+      "bytes": 5251,
+      "lines": 108,
+      "layer": "platform",
+      "depends-on": [
+        "src/lib/updater.ts",
+        "src/platform/types.ts",
+        "src/platform/webBridge.ts"
+      ]
+    },
+    {
+      "path": "tests/updater.test.ts",
+      "bytes": 5657,
+      "lines": 107,
+      "layer": "test",
+      "depends-on": [
+        "src/lib/updater.ts"
+      ]
+    },
+    {
+      "path": "scripts/check-bundles.mjs",
+      "bytes": 5429,
+      "lines": 103,
+      "layer": "infra",
+      "depends-on": []
+    },
+    {
+      "path": "src/components/DevTools.tsx",
+      "bytes": 4268,
+      "lines": 101,
+      "layer": "infra",
+      "depends-on": [
+        "src/hooks/AppProvider.tsx"
+      ]
+    },
+    {
+      "path": "src/storage/types.ts",
+      "bytes": 4995,
+      "lines": 100,
+      "layer": "storage",
+      "depends-on": [
+        "src/lib/types.ts"
+      ]
+    },
+    {
+      "path": "src/platform/capabilities.ts",
+      "bytes": 4023,
+      "lines": 95,
+      "layer": "platform",
+      "depends-on": []
+    },
+    {
+      "path": "scripts/check-dist.mjs",
+      "bytes": 3854,
+      "lines": 94,
+      "layer": "infra",
+      "depends-on": []
+    },
+    {
+      "path": "src/components/TransactionSelection.tsx",
+      "bytes": 4045,
+      "lines": 91,
+      "layer": "infra",
+      "depends-on": [
+        "src/components/ui.tsx"
+      ]
+    },
+    {
+      "path": "src/lib/normalize.ts",
+      "bytes": 4015,
+      "lines": 83,
+      "layer": "storage",
+      "depends-on": [
+        "src/lib/engine.ts",
+        "src/lib/types.ts"
+      ]
+    },
+    {
+      "path": "preload.cjs",
+      "bytes": 5355,
+      "lines": 80,
+      "layer": "infra",
+      "depends-on": []
+    },
+    {
+      "path": "src/platform/types.ts",
+      "bytes": 4393,
+      "lines": 76,
+      "layer": "infra",
+      "depends-on": [
+        "src/lib/updater.ts"
+      ]
+    },
+    {
+      "path": "src/lib/constants.ts",
+      "bytes": 3826,
+      "lines": 61,
+      "layer": "infra",
+      "depends-on": [
+        "src/lib/types.ts"
+      ]
+    },
+    {
+      "path": "src/components/BrandIcons.tsx",
+      "bytes": 2236,
+      "lines": 47,
+      "layer": "infra",
+      "depends-on": []
+    },
+    {
+      "path": "src/lib/electronApi.ts",
+      "bytes": 2374,
+      "lines": 46,
+      "layer": "infra",
+      "depends-on": [
+        "src/lib/updater.ts"
+      ]
+    },
+    {
+      "path": "src/components/Logo.tsx",
+      "bytes": 2010,
+      "lines": 44,
+      "layer": "infra",
+      "depends-on": []
+    },
+    {
+      "path": "src/platform/index.ts",
+      "bytes": 1702,
+      "lines": 38,
+      "layer": "platform",
+      "depends-on": [
+        "src/platform/android/capacitorBridge.ts",
+        "src/platform/capabilities.ts",
+        "src/platform/types.ts",
+        "src/platform/webBridge.ts",
+        "src/platform/windows/electronBridge.ts"
+      ]
+    },
+    {
+      "path": "tests/helpers/fixtures.ts",
+      "bytes": 1309,
+      "lines": 37,
+      "layer": "test",
+      "depends-on": [
+        "src/lib/engine.ts",
+        "src/lib/types.ts"
+      ]
+    },
+    {
+      "path": "vite.dev.config.ts",
+      "bytes": 1169,
+      "lines": 36,
+      "layer": "infra",
+      "depends-on": [
+        "vite.shared.ts"
+      ]
+    },
+    {
+      "path": "src/hooks/usePlatformBackButton.ts",
+      "bytes": 1871,
+      "lines": 35,
+      "layer": "state",
+      "depends-on": [
+        "src/platform/index.ts"
+      ]
+    },
+    {
+      "path": "vite.shared.ts",
+      "bytes": 1579,
+      "lines": 35,
+      "layer": "infra",
+      "depends-on": []
+    },
+    {
+      "path": "src/hooks/useCapabilities.ts",
+      "bytes": 1236,
+      "lines": 32,
+      "layer": "state",
+      "depends-on": [
+        "src/platform/capabilities.ts"
+      ]
+    },
+    {
+      "path": "src/storage/sqljs.d.ts",
+      "bytes": 938,
+      "lines": 29,
+      "layer": "infra",
+      "depends-on": []
+    },
+    {
+      "path": "vitest.config.ts",
+      "bytes": 612,
+      "lines": 26,
+      "layer": "infra",
+      "depends-on": []
+    },
+    {
+      "path": "tests/helpers/sqljs.ts",
+      "bytes": 686,
+      "lines": 16,
+      "layer": "test",
+      "depends-on": [
+        "src/storage/sqlite.ts"
+      ]
+    },
+    {
+      "path": "src/storage/wasmAsset.ts",
+      "bytes": 874,
+      "lines": 13,
+      "layer": "storage",
+      "depends-on": []
+    },
+    {
+      "path": "index.html",
+      "bytes": 757,
+      "lines": 0,
+      "layer": "infra",
+      "depends-on": []
+    },
+    {
+      "path": "index.dev.html",
+      "bytes": 542,
+      "lines": 0,
+      "layer": "infra",
+      "depends-on": []
+    },
+    {
+      "path": "project-map.json",
+      "bytes": 100612,
+      "lines": 0,
+      "layer": "infra",
+      "depends-on": []
+    }
+  ],
+  "issues": {
+    "missingModules": [],
+    "undocumented": [
+      "src/lib/engine.ts",
+      "src/components/ui.tsx",
+      "scripts/publish-release.mjs",
+      "src/views/Payments.tsx",
+      "src/views/Transactions.tsx",
+      "src/views/Planning.tsx",
+      "src/components/AppShell.tsx",
+      "src/lib/updater.ts",
+      "src/views/Scanner.tsx",
+      "src/components/charts.tsx",
+      "src/views/Investments.tsx",
+      "src/views/Dashboard.tsx",
+      "src/components/CameraScanner.tsx",
+      "src/lib/utils.ts",
+      "src/hooks/useOverlayStack.tsx",
+      "src/lib/types.ts",
+      "src/components/TransactionModal.tsx",
+      "src/platform/webBridge.ts",
+      "scripts/check-update-deps.mjs",
+      "scripts/check-bundles.mjs",
+      "src/components/DevTools.tsx",
+      "src/components/TransactionSelection.tsx",
+      "src/platform/types.ts",
+      "src/lib/constants.ts",
+      "src/components/BrandIcons.tsx",
+      "src/lib/electronApi.ts",
+      "src/components/Logo.tsx",
+      "src/storage/sqljs.d.ts"
+    ]
+  }
+}

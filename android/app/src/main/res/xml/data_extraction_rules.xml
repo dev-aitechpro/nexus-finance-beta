@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- NEXUS Finance: финансовые данные не покидают устройство.
+     Приложение заявляет «данные хранятся локально», и без этих правил
+     утверждение было бы неправдой: при allowBackup="true" Android по
+     умолчанию уносит в Google Backup всё приватное хранилище, а там лежит
+     вся база — она лежит в IndexedDB и продублирована в localStorage
+     (src/storage/snapshots.ts). Более того, при переносе на другое
+     устройство база восстанавливается молча, без согласия пользователя.
+     Поэтому исключаем всё: и облачную копию, и перенос «телефон → телефон». -->
+<data-extraction-rules>
+    <cloud-backup>
+        <exclude domain="root" path="." />
+        <exclude domain="file" path="." />
+        <exclude domain="database" path="." />
+        <exclude domain="sharedpref" path="." />
+        <exclude domain="external" path="." />
+        <exclude domain="device_root" />
+        <exclude domain="device_file" />
+        <exclude domain="device_database" />
+        <exclude domain="device_sharedpref" />
+    </cloud-backup>
+    <device-transfer>
+        <exclude domain="root" path="." />
+        <exclude domain="file" path="." />
+        <exclude domain="database" path="." />
+        <exclude domain="sharedpref" path="." />
+        <exclude domain="external" path="." />
+        <exclude domain="device_root" />
+        <exclude domain="device_file" />
+        <exclude domain="device_database" />
+        <exclude domain="device_sharedpref" />
+    </device-transfer>
+</data-extraction-rules>

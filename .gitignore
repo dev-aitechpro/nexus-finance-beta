@@ -1,0 +1,96 @@
+# Зависимости (никогда не попадают в Git)
+node_modules/
+yarn.lock
+pnpm-lock.yaml
+# package-lock.json, наоборот, В КОМИТ ПОПАДАЕТ. Без него чистая машина
+# поставит другие версии пакетов в пределах диапазонов из package.json и
+# соберёт другой бандл, то есть тот же исходник даст другой установщик.
+# Для релизного репозитория воспроизводимость важнее компактности.
+
+# Сборки и результаты билда (никогда не попадают в Git)
+dist/
+dist-electron/
+dist-*
+
+# Файлы окружения с секретами (никогда не попадают в Git)
+.env
+.env.local
+.env.*.local
+
+# Файлы IDE (не нужны на GitHub)
+.vscode/
+.idea/
+*.iml
+
+# Системные файлы macOS и Windows
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Логи и временные файлы
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+*.log
+*.tmp
+*.temp
+
+# Файлы, создаваемые при запуске
+.nyc_output/
+coverage/
+.terraform/
+*.lock
+
+# ---------------------------------------------------------------------------
+# Android / Capacitor (`npx cap add android` -> каталог android/)
+# ---------------------------------------------------------------------------
+# Собранные .apk / .aab и промежуточные артефакты сборки
+android/app/build/
+android/build/
+android/.gradle/
+android/capacitor-cordova-android-plugins/
+*.apk
+*.aab
+*.ap_
+*.aar
+
+# Машино-зависимая конфигурация: путь к Android SDK
+android/local.properties
+
+# Копия dist/, которую делает `npx cap sync` (генерируется, в git не нужна)
+android/app/src/main/assets/public/
+android/app/src/main/assets/capacitor.config.json
+android/app/src/main/assets/capacitor.plugins.json
+
+# Подпись release: и сам ключ, и пароли от него в git не попадают.
+# Как перевыпустить ключ — описано в android/keystore.properties
+android/keystore.properties
+*.jks
+*.keystore
+
+# Android Studio
+android/.idea/
+android/captures/
+android/.navigation/
+# Кэш Kotlin-компилятора (не покрывается android/.gradle)
+android/.kotlin/
+
+# ---------------------------------------------------------------------------
+# Учётные данные и секреты релизного конвейера
+# ---------------------------------------------------------------------------
+# Токен GitHub ни в коем случае не должен попасть в репозиторий: он даёт
+# доступ к приватному репозиторию с исходниками приложения. Лежит только в
+# переменной окружения или во временном файле вне проекта.
+*.token
+gh-token.txt
+.env
+release.local.json
+
+# Артефакты релиза в репозиторий не кладём — они живут в GitHub Releases
+*.exe
+*.blockmap
+# Метаданные автообновления: electron-builder пишет их рядом со сборкой
+# (<канал>.yml). Канал beta задан в build.publish, поэтому имён два.
+latest.yml
+beta.yml

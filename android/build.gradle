@@ -1,0 +1,61 @@
+// Top-level build file where you can add configuration options common to all sub-projects/modules.
+
+// ---------------------------------------------------------------------------
+// Правки относительно шаблона `npx cap add android` (Capacitor 8.5.2):
+//  1) buildscript.repositories — добавлено зеркало Maven Central ПЕРЕД mavenCentral().
+//     buildscript-класс.path — отдельный от dependencyResolutionManagement в
+//     settings.gradle, поэтому зеркало нужно продублировать и здесь.
+//     Причина: repo.maven.apache.org/repo1.maven.org в этой сети живут за
+//     локальным TUN (198.18.x.x) и рвут TLS; рабочее зеркало —
+//     https://maven-central.storage-download.googleapis.com/maven2
+//  2) allprojects.repositories — то же самое для тех модулей, чьи build.gradle
+//     объявляют репозитории сами (но см. PREFER_SETTINGS в settings.gradle:
+//     там они всё равно перекрыты).
+//  3) classpath AGP 8.13.0 -> 8.13.1: 8.13.0 в локальном кэше Gradle нет,
+//     а версия целиком скачивается с dl.google.com (доступен). Ставим ближайший
+//     патч-релиз: он совместим с 8.13.0 по API и уже лежит в кэше.
+//  4) rootProject.buildDir -> layout.buildDirectory: свойство Project.buildDir
+//     удалено в Gradle 9, а мы вынуждены на Gradle 9.3.1 (см. комментарий в
+//     gradle/wrapper/gradle-wrapper.properties).
+//
+// ТРЕБОВАНИЕ К JDK. AGP 8.13 для каждой задачи JavaCompile берёт компилятор из
+// Gradle-тулчейна с languageVersion == compileOptions.targetCompatibility, т.е.
+// требует физически установленный JDK 21. Если JDK 21 в системе нет, сборка падает с
+//     ToolchainProvisioningException: Cannot find a Java installation matching
+//     {languageVersion=21, ...}
+// Прописать путь к JDK 21 в репозитории нельзя (машино-зависимый путь), поэтому
+// регистрация JDK живёт в %USERPROFILE%\.gradle\gradle.properties через
+// org.gradle.java.installations.paths, а scripts/build-android.mjs умеет найти
+// JDK 21 сам и передать -Porg.gradle.java.installations.paths. Подробнее — в отчёте.
+// ---------------------------------------------------------------------------
+
+buildscript {
+    repositories {
+        google()
+        maven { url = 'https://maven-central.storage-download.googleapis.com/maven2' }
+        mavenCentral()
+    }
+    dependencies {
+        classpath 'com.android.tools.build:gradle:8.13.1'
+        classpath 'com.google.gms:google-services:4.4.4'
+
+        // NOTE: Do not place your application dependencies here; they belong
+        // in the individual module build.gradle files
+    }
+}
+
+apply from: "variables.gradle"
+
+allprojects {
+    repositories {
+        google()
+        maven { url = 'https://maven-central.storage-download.googleapis.com/maven2' }
+        mavenCentral()
+    }
+}
+
+tasks.register('clean', Delete) {
+    // Project.getBuildDir() удалён в Gradle 9 -> используем Provider<Directory>.
+    delete rootProject.layout.buildDirectory
+}
+

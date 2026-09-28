@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+          xmlns:tools="http://schemas.android.com/tools">
+
+    <application
+        android:allowBackup="false"
+        android:dataExtractionRules="@xml/data_extraction_rules"
+        android:fullBackupContent="@xml/backup_rules"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:supportsRtl="true"
+        android:usesCleartextTraffic="false"
+        android:theme="@style/AppTheme">
+
+        <activity
+            android:configChanges="orientation|keyboardHidden|keyboard|screenSize|locale|smallestScreenSize|screenLayout|uiMode|navigation|density"
+            android:name=".MainActivity"
+            android:label="@string/title_activity_main"
+            android:theme="@style/AppTheme.NoActionBarLaunch"
+            android:windowSoftInputMode="adjustResize"
+            android:launchMode="singleTask"
+            android:exported="true">
+
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+
+        </activity>
+
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths"></meta-data>
+        </provider>
+    </application>
+
+    <!-- Permissions -->
+
+    <!-- Шаблон Capacitor объявляет только INTERNET. Ниже добавлено то, что нужно
+         именно NEXUS Finance:
+
+         * CAMERA — сканер чеков. jsqr работает через getUserMedia(), а Android
+           WebView отдаёт камеру только если разрешение реально объявлено в
+           манифесте; иначе onPermissionRequest отклоняется и сканер не запустится.
+           Камера опциональна: <uses-feature ... required="false"/>, чтобы
+           приложение ставилось и на планшеты без камеры.
+         * POST_NOTIFICATIONS — системные уведомления. Объявлено заранее, потому
+           что на Android 13+ его надо запросить у пользователя во время работы
+           приложения. Сейчас PlatformBridge.notify() в приложении ещё не
+           вызывается (уведомления показываются внутри интерфейса), поэтому
+           запрос разрешения не происходит — см. docs/Решение-проблем.md.
+
+         Остальные три разрешения приезжали транзитивно из манифеста
+         @capacitor/local-notifications, но приложение их не использует:
+         приложение показывает только немедленные уведомления
+         (isExactNotification: false), не планирует их по расписанию и не
+         берёт wakelock. Особенно вреден SCHEDULE_EXACT_ALARM: это специальный
+         доступ, который на Android 14+ по умолчанию не выдан, и приложение
+         попадало бы в чужую категорию «Будильники и напоминания».
+    -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.CAMERA" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" tools:node="remove" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" tools:node="remove" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" tools:node="remove" />
+    <uses-permission android:name="android.permission.VIBRATE" tools:node="remove" />
+
+    <uses-feature android:name="android.hardware.camera" android:required="false" />
+    <uses-feature android:name="android.hardware.camera.autofocus" android:required="false" />
+</manifest>

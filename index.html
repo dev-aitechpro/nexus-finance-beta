@@ -1,0 +1,17 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <!-- viewport-fit=cover: без него env(safe-area-inset-*) на телефонах с
+         вырезом и жестовой панелью всегда равен 0, и «безопасная зона»
+         не рассчитывается. -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>NEXUS Finance</title>
+    <!-- 🔥 Изменён путь на относительный для корректной работы в Electron -->
+    <link rel="icon" href="./favicon.ico" />
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

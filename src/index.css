@@ -1,0 +1,1860 @@
+@import "tailwindcss";
+
+/* ═══════════════════════════ Темы (Киберпанк с неоном и стеклом) ═══════════════════════════ */
+
+:root,
+[data-theme="cyberpunk"] {
+  /* ── Безопасные зоны ──
+     На Android 15+ приложение с targetSdk 35+ рисуется под системными
+     панелями, а Capacitor в режиме insetsHandling:"css" НЕ падит WebView,
+     а отдаёт значения в env(). Пока верхний отступ не учитывался, липкая
+     шапка на телефоне уезжала под строку состояния и под «чёлку».
+     Читаем из env() с фолбэком на 0 — на десктопе и в старых WebView
+     переменные равны нулю и ничего не меняется. */
+  --sat: env(safe-area-inset-top, 0px);
+  --sar: env(safe-area-inset-right, 0px);
+  --sab: env(safe-area-inset-bottom, 0px);
+  --sal: env(safe-area-inset-left, 0px);
+
+  --bg: #0a0b0e;
+  --card: rgba(255, 255, 255, 0.045);
+  --card-solid: #10141c;
+  --line: rgba(255, 255, 255, 0.09);
+  /* Граница карточек заметнее линии --line: на тёмном фоне 9% белого
+     не давали контура, и карточки сливались с соседними блоками. */
+  --card-line: rgba(255, 255, 255, 0.17);
+  --card-text: #f2f4fa;
+  --muted: #8a8fa8;
+  /* Алиасы для каркаса: разметка (AppShell) обращается к --ink/--ink-2.
+     Без них text-[var(--ink)] и hover:text-[var(--ink)] молча ничего не делали. */
+  --ink: var(--text);
+  --ink-2: var(--muted);
+  --accent: #00d4ff;
+  --pink: #ff2d78;
+  --ok: #00ff87;
+  --warn: #ffb800;
+  --danger: #ff4d5e;
+  --on-accent: #041018;
+  --glow: 0 0 16px rgba(0, 212, 255, 0.35);
+  color-scheme: dark;
+}
+
+[data-theme="dark"] {
+  --bg: #0e1014;
+  --card: #151821;
+  --card-solid: #171a23;
+  --line: rgba(255, 255, 255, 0.08);
+  --card-line: rgba(255, 255, 255, 0.15);
+  --card-text: #e8eaf0;
+  --muted: #9aa1b5;
+  /* См. алиасы --ink/--ink-2 в блоке :root */
+  --ink: var(--text);
+  --ink-2: var(--muted);
+  --accent: #6366f1;
+  --pink: #f472b6;
+  --ok: #22c55e;
+  --warn: #f59e0b;
+  --danger: #ef4444;
+  --on-accent: #ffffff;
+  --glow: none;
+  color-scheme: dark;
+}
+
+[data-theme="light"] {
+  --bg: #f5f7fa;
+  --card: #ffffff;
+  --card-solid: #ffffff;
+  --line: #e2e7f0;
+  --card-line: #d2d9e6;
+  --card-text: #1a1a2e;
+  --muted: #667085;
+  /* См. алиасы --ink/--ink-2 в блоке :root */
+  --ink: var(--text);
+  --ink-2: var(--muted);
+  --accent: #007aff;
+  --pink: #e11d74;
+  --ok: #148a50;
+  --warn: #b7791f;
+  --danger: #d92d20;
+  --on-accent: #ffffff;
+  --glow: none;
+  color-scheme: light;
+}
+
+/* ═══════════════════════════ База ═══════════════════════════ */
+
+*,
+::before,
+::after {
+  border-color: var(--line);
+}
+
+html {
+  font-size: 100%;
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  height: 100%;
+  background: var(--bg);
+  color: var(--text);
+  font-family: "Inter", "Segoe UI", system-ui, sans-serif;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  transition: background 0.3s ease, color 0.3s ease;
+}
+
+#root {
+  height: 100%;
+}
+
+.font-display {
+  font-family: "Orbitron", "Inter", sans-serif;
+}
+
+.mono {
+  font-family: "JetBrains Mono", ui-monospace, "SF Mono", monospace;
+  font-variant-numeric: tabular-nums;
+}
+
+::selection {
+  background: color-mix(in srgb, var(--accent) 30%, transparent);
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--muted) 32%, transparent);
+  border-radius: 8px;
+  border: 3px solid transparent;
+  background-clip: content-box;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* ═══════════════════════════ Фоновые слои (Сетка, свечение, линия) ═══════════════════════════ */
+
+/* Слой целиком декоративный: разметка даёт ему aria-hidden, а pointer-events
+   гарантирует, что он не перехватывает клики и не мешает выделению текста
+   поверх сетки. z-index: -1 держит его под каркасом, поэтому у корневого
+   элемента НЕ должно быть непрозрачного фона — иначе слои будут закрыты. */
+.app-bg {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background: var(--bg);
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.app-bg-grid {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(color-mix(in srgb, var(--accent) 7%, transparent) 1px, transparent 1px),
+    linear-gradient(90deg, color-mix(in srgb, var(--accent) 7%, transparent) 1px, transparent 1px);
+  background-size: 46px 46px;
+  mask-image: radial-gradient(ellipse 95% 72% at 50% 0%, black 25%, transparent 78%);
+  opacity: 0.55;
+}
+
+/* Медленный дрейф свечений: только transform (без reflow), период намеренно
+   большой, чтобы фон «дышал», а не переливался. На слабых устройствах
+   свечения и вовсе скрыты (html[data-perf="low"] .app-bg-glow). */
+.app-bg-glow {
+  position: absolute;
+  width: 62vw;
+  height: 62vw;
+  border-radius: 50%;
+  filter: blur(110px);
+  will-change: transform;
+  animation: glow-drift 26s ease-in-out infinite alternate;
+}
+.app-bg-glow-a {
+  top: -24%;
+  left: -12%;
+  background: var(--accent);
+  opacity: 0.13;
+  animation-name: glow-drift;
+  animation-duration: 26s;
+}
+.app-bg-glow-b {
+  bottom: -30%;
+  right: -14%;
+  background: var(--pink);
+  opacity: 0.09;
+  animation-name: glow-drift;
+  animation-duration: 34s;
+  animation-direction: alternate-reverse;
+}
+
+/* 🔥 Линия сканирования, которая двигается.
+   box-shadow превращает тонкую линию в мягкий луч — так видно движение даже
+   на первом кадре, а не только в момент прохождения. */
+.app-bg-scan {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: -2%;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--accent), transparent);
+  box-shadow: 0 0 26px 8px color-mix(in srgb, var(--accent) 18%, transparent);
+  opacity: 0.22;
+  will-change: transform;
+  animation: scanmove 10s linear infinite;
+}
+
+[data-theme="dark"] .app-bg-grid,
+[data-theme="dark"] .app-bg-scan,
+[data-theme="light"] .app-bg-grid,
+[data-theme="light"] .app-bg-scan {
+  display: none;
+}
+[data-theme="dark"] .app-bg-glow {
+  opacity: 0.05;
+}
+[data-theme="light"] .app-bg-glow-a {
+  opacity: 0.06;
+}
+[data-theme="light"] .app-bg-glow-b {
+  opacity: 0.05;
+}
+
+/* ═══════════════════════════ Каркас (Flex Safe Zone) ═══════════════════════════ */
+
+.sidebar {
+  position: relative;
+  left: auto;
+  top: auto;
+  bottom: auto;
+  width: 240px;
+  padding: 22px 16px;
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid var(--line);
+  background: color-mix(in srgb, var(--bg) 80%, transparent);
+  backdrop-filter: blur(18px);
+  flex-shrink: 0;
+  height: 100%;
+  z-index: 30;
+}
+
+.main {
+  margin-left: 0;
+  padding: 0;
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.app-footer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 10px;
+  margin-top: auto;
+  padding-top: 18px;
+  border-top: 1px solid var(--line);
+  font-size: 0.72rem;
+  color: var(--muted);
+}
+
+/* ── Мобильная шапка: логотип, статус и действия. Показывается только ≤ 900px ── */
+.mobile-topbar {
+  display: none;
+}
+
+/* ── Мобильная навигация: нижняя лента (position: fixed, чтобы пережить
+   прокрутку <main>). На десктопе скрыта, на узком экране — единственная
+   навигация, т.к. .sidebar там выключен.
+
+   Лента НЕ прокручивается. Раньше здесь стояли overflow-x: auto и
+   white-space: nowrap на пунктах: на 393 px в ленту влезало 4,5 пункта из 9,
+   «Подтвердить» обрезался, а до «Сканера» и «Настроек» было не дотянуться без
+   догадки о горизонтальной прокрутке. Теперь колонки делит сам браузер
+   (grid-auto-columns: minmax(0, 1fr)), подпись сжимается многоточием, и пять
+   пунктов помещаются при любой ширине, на которой лента вообще показана.
+
+   Пятый пункт — «Ещё»: он открывает шторку со всеми разделами (AppShell →
+   BottomSheet), поэтому полный список всегда доступен одним нажатием.
+
+   Нижний отступ учитывает «безопасную зону»: в Android-контейнере WebView
+   рисуется не во весь экран, но системная панель жестов снизу есть. ── */
+.mobile-nav {
+  display: none;
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 45;
+  /* Поток вбок + колонки равной ширины: столько колонок, сколько пунктов.
+     minmax(0, 1fr), а не 1fr: иначе длинная подпись распирает колонку и
+     возвращается горизонтальная прокрутка. */
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(0, 1fr);
+  align-items: stretch;
+  /* Высота ленты: 1px (рамка) + 4 + 48 (пункт) + 4 = 57px. Резерв под ленту
+     в .app-main — 58px, поэтому лента не накрывает последнюю карточку. */
+  padding: 4px calc(4px + var(--sar)) calc(4px + var(--sab)) calc(4px + var(--sal));
+  background: color-mix(in srgb, var(--bg) 88%, transparent);
+  backdrop-filter: blur(18px);
+  border-top: 1px solid var(--line);
+}
+
+@media (max-width: 900px) {
+  .sidebar {
+    display: none;
+  }
+  .main {
+    padding: 1rem;
+  }
+  /* Резерв под нижнюю ленту вкладок, иначе футер и последняя карточка
+     оказываются под ней. */
+  .app-main {
+    /* Слева/справа — вырез в ландшафтной ориентации, снизу — лента вкладок. */
+    padding-left: calc(1rem + var(--sal));
+    padding-right: calc(1rem + var(--sar));
+    padding-bottom: calc(58px + var(--sab));
+  }
+  .mobile-topbar {
+    display: flex;
+    position: sticky;
+    top: 0;
+    z-index: 40;
+    flex: none;
+    flex-direction: column;
+    gap: 10px;
+    /* Верхний отступ — строка состояния и «чёлка». */
+    padding: calc(12px + var(--sat)) calc(14px + var(--sar)) 12px calc(14px + var(--sal));
+    background: color-mix(in srgb, var(--bg) 84%, transparent);
+    backdrop-filter: blur(16px);
+    border-bottom: 1px solid var(--line);
+  }
+  .mobile-nav {
+    display: grid;
+  }
+}
+
+/* Пункт ленты: иконка над подписью, колонка на всю ширину ячейки.
+   min-width: 0 + многоточие у подписи — чтобы длинное слово не выпирало за
+   ячейку и не возвращало горизонтальную прокрутку. */
+.mobile-nav-btn {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  min-width: 0;
+  /* Зона нажатия: 48px против рекомендованных 44px — на телефоне палец
+     не попадает в углы ячеек. */
+  min-height: 48px;
+  padding: 4px 1px;
+  border-radius: 10px;
+  border: 1px solid transparent;
+  color: var(--muted);
+  font-size: 0.66rem;
+  font-weight: 600;
+  line-height: 1.15;
+  text-align: center;
+  background: transparent;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+/* Подпись: одна строка, обрезка многоточием. */
+.mobile-nav-label {
+  display: block;
+  max-width: 100%;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+/* Бейдж неподтверждённых: в колоночной вёрстке рядом с подписью он занял бы
+   третью строку и съел высоту зоны нажатия, поэтому висит на углу иконки.
+   Селектор от контейнера — чтобы перекрыть .nav-badge, который объявлен ниже
+   по файлу. */
+.mobile-nav-btn .mobile-nav-badge {
+  position: absolute;
+  top: 2px;
+  right: calc(50% - 15px);
+}
+/* :where() — чтобы hover не перебивал .mobile-nav-btn-active (0,1,0). */
+.mobile-nav-btn:where(:hover) {
+  color: var(--text);
+  background: color-mix(in srgb, var(--text) 6%, transparent);
+}
+.mobile-nav-btn-active {
+  color: var(--accent);
+  border-color: color-mix(in srgb, var(--accent) 40%, transparent);
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
+}
+.mobile-nav-btn-active:where(:hover) {
+  background: color-mix(in srgb, var(--accent) 18%, transparent);
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  width: 100%;
+  padding: 0.56rem 0.75rem;
+  border-radius: 8px;
+  color: var(--muted);
+  font-size: 0.88rem;
+  font-weight: 500;
+  text-align: left;
+  border: 1px solid transparent;
+  position: relative;
+  transition: all 0.16s;
+  cursor: pointer;
+  background: transparent;
+}
+/* :where(:hover) — иначе обычный .nav-item:hover (0,2,0) перебивал бы
+   .nav-item-active (0,1,0) и активный пункт терял accent-цвет при наведении. */
+/* Ссылки футера с логотипами сервисов: значок и текст одного цвета,
+   при наведении слегка светлеют. Раньше здесь стояли эмодзи «✈️» и сердечко —
+   это не логотипы, и рядом с текстом они выглядели как мусор. */
+.footer-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  opacity: 0.85;
+  transition: opacity 0.15s, transform 0.15s;
+}
+.footer-link:hover {
+  opacity: 1;
+  transform: translateY(-1px);
+}
+
+.nav-item:where(:hover) {
+  color: var(--text);
+  background: color-mix(in srgb, var(--text) 5%, transparent);
+}
+.nav-item-active {
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
+  border-color: color-mix(in srgb, var(--accent) 25%, transparent);
+}
+.nav-item-active:where(:hover) {
+  background: color-mix(in srgb, var(--accent) 16%, transparent);
+}
+/* Светящаяся полоса активной вкладки. Полоса живёт ВНУТРИ пункта (left: 0),
+   а не за его пределами: <nav> — прокручиваемый контейнер (overflow-y: auto)
+   и обрезал бы ::before, вынесенный за левый край. Появление полосы
+   анимировано, поэтому переключение вкладки не выглядит мгновенным. */
+.nav-item-active::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 20%;
+  bottom: 20%;
+  width: 3px;
+  background: var(--accent);
+  box-shadow: 0 0 10px var(--accent);
+  border-radius: 0 2px 2px 0;
+  pointer-events: none;
+  animation: nav-bar-in 0.26s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+.nav-badge {
+  min-width: 19px;
+  height: 19px;
+  padding: 0 5px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: var(--pink);
+  color: #fff;
+  font-size: 0.68rem;
+  font-weight: 800;
+  box-shadow: 0 0 10px color-mix(in srgb, var(--pink) 60%, transparent);
+}
+
+/* ═══════════════════════════ Логотип (Адаптивный к теме, без img) ═══════════════════════════ */
+
+.logo-hex {
+  width: 38px;
+  height: 38px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--accent);
+  background: linear-gradient(
+    160deg,
+    color-mix(in srgb, var(--accent) 26%, transparent),
+    color-mix(in srgb, var(--pink) 12%, transparent)
+  );
+  border: 1px solid color-mix(in srgb, var(--accent) 50%, transparent);
+  clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%);
+  filter: drop-shadow(0 0 9px color-mix(in srgb, var(--accent) 45%, transparent));
+}
+
+.status-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--ok);
+  box-shadow: 0 0 8px var(--ok);
+  animation: pulse-glow 2.4s ease-in-out infinite;
+  flex: none;
+}
+
+/* Шестиугольник.
+   Проблема: clip-path срезает рамку по диагоналям — фигура выглядит
+   «обрубленной». Решение: контур рисуется ВНУТРЬ (box-shadow: inset), потому
+   что он обрезается тем же clip-path и идёт ровно по контуру, включая
+   срезанные углы. Толщина и насыщенность задаются здесь, а не по месту:
+   разметка задаёт только ЦВЕТ (color) и заливку.
+   Рамку в разметке ставить не нужно — иначе получаются две линии. */
+.hex {
+  --hex-ring: 1.5px;
+  /* Контур непрозрачный: приглушённый вариант на тёмном фоне читался как
+     мягкое свечение, а не как граница. Цвет берётся из currentColor —
+     в разметке это цвет категории. */
+  --hex-ring-color: currentColor;
+  position: relative;
+  display: inline-flex;
+  clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%);
+  box-shadow: inset 0 0 0 var(--hex-ring) var(--hex-ring-color);
+}
+/* Мелкие значки: тоньше, иначе контур съедает фигуру */
+.hex-sm {
+  --hex-ring: 1px;
+}
+/* Пустые состояния и служебные значки — контур приглушённый,
+   иначе декоративный значок перетягивает внимание с текста. */
+.hex-muted {
+  --hex-ring-color: color-mix(in srgb, currentColor 40%, transparent);
+}
+/* Логотип в сайдбаре: контур светлее, фигура крупная */
+.hex-logo {
+  --hex-ring-color: color-mix(in srgb, var(--accent) 70%, #ffffff 30%);
+}
+/* Светлая тема: цвета категорий насыщенно-светлые (#00FF87, #00D4FF), и на
+   белой карточке контур из них почти не виден. Примешиваем чернила темы —
+   граница читается, а фигура остаётся цветной. */
+[data-theme="light"] .hex {
+  --hex-ring-color: color-mix(in srgb, currentColor 62%, #1a1a2e);
+}
+[data-theme="light"] .hex-logo {
+  --hex-ring-color: color-mix(in srgb, var(--accent) 82%, #1a1a2e);
+}
+[data-theme="light"] .hex-muted {
+  --hex-ring-color: color-mix(in srgb, currentColor 40%, #1a1a2e);
+}
+
+/* ═══════════════════════════ Остальные стили (кнопки, карточки и т.д.) ═══════════════════════════ */
+
+/* Граница карточки: --line был слишком тихим (9% белого) — на тёмном фоне
+   контур карточки почти не читался и она сливалась с соседними блоками.
+   Рисуем границу в два слоя: 1px заметной линии + мягкий внутренний блик
+   сверху, чтобы верхняя кромка выделялась даже на однотонном фоне. */
+.card {
+  background: var(--card);
+  border: 1px solid var(--card-line);
+  border-radius: 10px;
+  backdrop-filter: blur(14px);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05), 0 1px 2px rgba(0, 0, 0, 0.28);
+}
+[data-theme="light"] .card {
+  box-shadow: 0 1px 2px rgba(16, 24, 40, 0.06), 0 10px 28px -16px rgba(16, 24, 40, 0.16);
+}
+
+/* Срезанный угол карточки (тема cyberpunk). Чтобы контур шёл и по срезу,
+   а не только по прямоугольнику, добавляем внутреннюю тень: clip-path обрежет
+   её ровно по диагонали, и угол перестанет выглядеть «обрубленным». */
+.cut {
+  clip-path: polygon(0 0, calc(100% - 16px) 0, 100% 16px, 100% 100%, 16px 100%, 0 calc(100% - 16px));
+}
+/* Контур по срезанному углу — только там, где угол реально срезан (cyberpunk).
+   inset-тень обрезается тем же clip-path и идёт ровно по диагонали, поэтому
+   угол перестаёт выглядеть «обрубленным». В тёмной и светлой темах угол не
+   срезан, и внешняя тень карточки остаётся видимой. */
+[data-theme="cyberpunk"] .cut {
+  box-shadow: inset 0 0 0 1px var(--card-line), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+[data-theme="dark"] .cut,
+[data-theme="light"] .cut {
+  clip-path: none;
+}
+
+.card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+.card-title {
+  font-family: "Orbitron", "Inter", sans-serif;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text);
+}
+.card-sub {
+  font-size: 0.72rem;
+  color: var(--muted);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.card-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--accent);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 2px 4px;
+  border-radius: 5px;
+}
+.card-link:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* ═══════════════════════════ KPI ═══════════════════════════ */
+
+.kpi-strip {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+}
+.kpi-cell {
+  padding: 16px 18px;
+  border-left: 1px solid var(--line);
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 0;
+}
+.kpi-cell:first-child {
+  border-left: none;
+}
+.kpi-label {
+  font-size: 0.64rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.kpi-value {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--text);
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+}
+.kpi-sub {
+  font-size: 0.7rem;
+}
+
+@media (max-width: 1150px) {
+  .kpi-strip {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  .kpi-cell {
+    border-top: 1px solid var(--line);
+  }
+  .kpi-cell:nth-child(-n + 3) {
+    border-top: none;
+  }
+  .kpi-cell:nth-child(3n + 1) {
+    border-left: none;
+  }
+}
+@media (max-width: 620px) {
+  .kpi-strip {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .kpi-cell {
+    border-top: 1px solid var(--line);
+  }
+  .kpi-cell:nth-child(-n + 2) {
+    border-top: none;
+  }
+  .kpi-cell:nth-child(odd) {
+    border-left: none;
+  }
+  .kpi-cell:nth-child(even) {
+    border-left: 1px solid var(--line);
+  }
+}
+
+/* ═══════════════════════════ Кнопки ═══════════════════════════ */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.55rem 0.95rem;
+  font-size: 0.855rem;
+  font-weight: 600;
+  font-family: inherit;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  color: var(--text);
+  white-space: nowrap;
+  background: transparent;
+}
+/* Нейтральный hover для базового .btn (кнопки без варианта были «мёртвыми»).
+   :where(:hover) даёт специфичность .btn (0,1,0), поэтому варианты
+   .btn-primary/-ghost/-danger/-ok, объявленные ниже, его не перебивают. */
+.btn:where(:hover) {
+  background: color-mix(in srgb, var(--text) 6%, transparent);
+  border-color: var(--line);
+}
+.btn:active {
+  transform: translateY(1px) scale(0.99);
+}
+.btn:disabled {
+  opacity: 0.45;
+  pointer-events: none;
+}
+
+.btn-primary {
+  background: var(--accent);
+  color: var(--on-accent);
+  border-color: color-mix(in srgb, var(--accent) 60%, transparent);
+  box-shadow: var(--glow);
+}
+.btn-primary:hover {
+  filter: brightness(1.13);
+  box-shadow: 0 0 22px color-mix(in srgb, var(--accent) 50%, transparent);
+}
+
+.btn-ghost {
+  border-color: var(--line);
+  color: var(--text);
+}
+.btn-ghost:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 8%, transparent);
+}
+
+.btn-danger {
+  background: color-mix(in srgb, var(--danger) 16%, transparent);
+  border-color: color-mix(in srgb, var(--danger) 45%, transparent);
+  color: var(--danger);
+}
+.btn-danger:hover {
+  background: var(--danger);
+  color: #fff;
+  border-color: var(--danger);
+}
+
+.btn-ok {
+  background: color-mix(in srgb, var(--ok) 14%, transparent);
+  border-color: color-mix(in srgb, var(--ok) 45%, transparent);
+  color: var(--ok);
+}
+.btn-ok:hover {
+  background: var(--ok);
+  color: var(--bg);
+  border-color: var(--ok);
+}
+
+.btn-sm {
+  padding: 0.36rem 0.7rem;
+  font-size: 0.78rem;
+}
+
+.btn-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 7px;
+  border: 1px solid var(--line);
+  color: var(--muted);
+  background: transparent;
+  cursor: pointer;
+  transition: all 0.15s;
+  flex: none;
+}
+.btn-icon:hover {
+  color: var(--accent);
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
+}
+.btn-icon:disabled {
+  opacity: 0.35;
+  pointer-events: none;
+}
+.btn-icon-danger:hover {
+  color: var(--danger);
+  border-color: var(--danger);
+  background: color-mix(in srgb, var(--danger) 10%, transparent);
+}
+.btn-icon-ok:hover {
+  color: var(--ok);
+  border-color: var(--ok);
+  background: color-mix(in srgb, var(--ok) 12%, transparent);
+}
+
+/* ═══════════════════════════ Формы ═══════════════════════════ */
+
+.input {
+  width: 100%;
+  background: color-mix(in srgb, var(--text) 4%, transparent);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 0.55rem 0.8rem;
+  font-size: 0.9rem;
+  font-family: inherit;
+  color: var(--text);
+  transition: border-color 0.15s, box-shadow 0.15s;
+  outline: none;
+}
+[data-theme="light"] .input {
+  background: #fff;
+}
+.input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 16%, transparent);
+}
+.input::placeholder {
+  color: color-mix(in srgb, var(--muted) 75%, transparent);
+}
+.input:disabled {
+  opacity: 0.55;
+}
+
+/* Кастомный SELECT для всех тем */
+select.input {
+  appearance: none;
+  -webkit-appearance: none;
+  background-color: var(--bg);
+  color: var(--text);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%238a8fa8' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.8rem center;
+  background-size: 12px;
+  padding-right: 2.5rem;
+}
+[data-theme="cyberpunk"] select.input option,
+[data-theme="dark"] select.input option {
+  background-color: #10141c;
+  color: #f2f4fa;
+}
+[data-theme="light"] select.input option {
+  background-color: #ffffff;
+  color: #1a1a2e;
+}
+
+.field-label {
+  display: block;
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 0.35rem;
+}
+
+.segmented {
+  display: inline-flex;
+  padding: 3px;
+  gap: 3px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: color-mix(in srgb, var(--text) 4%, transparent);
+  width: 100%;
+}
+.segmented-btn {
+  flex: 1;
+  padding: 0.4rem 0.7rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  font-family: inherit;
+  border-radius: 6px;
+  color: var(--muted);
+  transition: all 0.15s;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.segmented-btn:hover {
+  color: var(--text);
+}
+.segmented-btn-active {
+  background: color-mix(in srgb, var(--accent) 16%, transparent);
+  color: var(--accent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 40%, transparent);
+}
+
+.chip {
+  border: 1px solid var(--line);
+  background: transparent;
+  color: var(--muted);
+  padding: 0.32rem 0.72rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+/* ── Выбор категории: сетка плиток с иконкой ──
+   Иконка — часть кнопки, поэтому выбор не может «потерять» иконку,
+   как это было с нативным <select>. */
+.cat-picker {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(88px, 1fr));
+  gap: 0.4rem;
+  padding: 0.35rem;
+  border: 1px solid transparent;
+  border-radius: 12px;
+}
+.cat-picker-compact {
+  grid-template-columns: repeat(auto-fill, minmax(44px, 1fr));
+  gap: 0.3rem;
+}
+.cat-item {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  min-width: 0;
+  padding: 0.35rem 0.4rem;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  background: transparent;
+  cursor: pointer;
+  font-family: inherit;
+  /* Только transform/opacity: не вызываем reflow (ТЗ п. 4.2) */
+  transition: transform 0.16s cubic-bezier(0.2, 0.8, 0.2, 1), background-color 0.16s, border-color 0.16s, box-shadow 0.16s;
+}
+.cat-item:hover {
+  background: color-mix(in srgb, var(--text) 6%, transparent);
+  transform: translateY(-1px);
+}
+.cat-item:active {
+  transform: translateY(0) scale(0.97);
+}
+.cat-item:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.cat-item-active {
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, currentColor 12%, transparent);
+}
+.cat-item-label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  min-width: 0;
+  text-align: left;
+}
+.cat-picker-compact .cat-item {
+  justify-content: center;
+  padding: 0.25rem;
+}
+.cat-chip {
+  transition: transform 0.15s, color 0.15s, border-color 0.15s, background-color 0.15s;
+}
+.cat-chip:hover {
+  transform: translateY(-1px);
+}
+[data-theme="light"] .cat-item:hover {
+  background: rgba(16, 24, 40, 0.04);
+}
+
+.chip:hover {
+  color: var(--accent);
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 8%, transparent);
+}
+
+.chip-date {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0.45rem 0.8rem;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  font-size: 0.78rem;
+  color: var(--muted);
+  background: var(--card);
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 0.2rem 0.5rem;
+  border-radius: 5px;
+  border: 1px solid;
+  white-space: nowrap;
+}
+
+.toggle {
+  width: 40px;
+  height: 22px;
+  border-radius: 99px;
+  border: 1px solid var(--line);
+  background: color-mix(in srgb, var(--text) 8%, transparent);
+  position: relative;
+  transition: all 0.2s;
+  cursor: pointer;
+  flex: none;
+}
+.toggle-knob {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--muted);
+  transition: all 0.2s;
+}
+.toggle-on {
+  background: color-mix(in srgb, var(--accent) 30%, transparent);
+  border-color: var(--accent);
+}
+.toggle-on .toggle-knob {
+  left: 20px;
+  background: var(--accent);
+  box-shadow: 0 0 8px color-mix(in srgb, var(--accent) 70%, transparent);
+}
+
+.progress-track {
+  background: color-mix(in srgb, var(--text) 8%, transparent);
+  border-radius: 99px;
+  overflow: hidden;
+  width: 100%;
+}
+/* Заполнение — только transform: width вызывал бы пересчёт раскладки (ТЗ п. 4.2) */
+.progress-fill {
+  height: 100%;
+  width: 100%;
+  border-radius: 99px;
+  transform: scaleX(0);
+  transform-origin: left center;
+  will-change: transform;
+  transition: transform 0.65s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+  transform: rotate(45deg);
+  display: inline-block;
+  flex: none;
+}
+
+.link {
+  color: var(--accent);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+/* ═══════════════════════════ Модальные окна и тосты ═══════════════════════════ */
+
+.modal-overlay {
+  background: rgba(3, 5, 9, 0.66);
+  backdrop-filter: blur(4px);
+  animation: fade-in 0.2s ease;
+  border: none;
+}
+[data-theme="light"] .modal-overlay {
+  background: rgba(20, 26, 40, 0.45);
+}
+
+.modal-panel {
+  animation: slide-up 0.32s cubic-bezier(0.2, 0.9, 0.25, 1);
+  max-height: 88vh;
+  background: var(--card-solid);
+  box-shadow:
+    0 26px 70px -20px rgba(0, 0, 0, 0.6),
+    0 0 0 1px color-mix(in srgb, var(--accent) 16%, transparent);
+}
+
+/* Нижняя шторка «Ещё» (список всех разделов на телефоне).
+   Приём тот же, что у .modal-overlay/.modal-panel: подложка гаснет через
+   fade-in, панель выезжает снизу через slide-up, а выход играется в JS
+   (collapseOutKeyframes в BottomSheet, src/components/ui.tsx). Разметка
+   строк переиспользует .nav-item — те же кнопки и подсветка, что в сайдбаре.
+   Правила стоят после .card, иначе полупрозрачный фон и скругление карточки
+   перебили бы свои. */
+.sheet-overlay {
+  background: rgba(3, 5, 9, 0.66);
+  backdrop-filter: blur(4px);
+  animation: fade-in 0.2s ease;
+  border: none;
+}
+[data-theme="light"] .sheet-overlay {
+  background: rgba(20, 26, 40, 0.45);
+}
+
+.sheet-panel {
+  animation: slide-up 0.3s cubic-bezier(0.2, 0.9, 0.25, 1);
+  max-height: 84vh;
+  background: var(--card-solid);
+  backdrop-filter: none;
+  border-radius: 16px 16px 0 0;
+  box-shadow:
+    0 -18px 50px -18px rgba(0, 0, 0, 0.65),
+    0 0 0 1px color-mix(in srgb, var(--accent) 14%, transparent);
+  /* Список разделов не должен утягивать за собой страницу под шторкой. */
+  overscroll-behavior: contain;
+}
+/* «Ручка» шторки — чисто украшение, в разметке aria-hidden. */
+.sheet-grip {
+  display: block;
+  width: 40px;
+  height: 4px;
+  margin: 8px auto 0;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--muted) 45%, transparent);
+}
+.sheet-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+/* Слабое устройство: необязательные анимации выключены (ТЗ Группа 4). Свои
+   правила, а не правка общих списков html[data-perf="low"] — блок нижней
+   навигации их не касается. */
+html[data-perf="low"] .sheet-panel,
+html[data-perf="low"] .sheet-overlay {
+  animation: none !important;
+}
+
+.toast {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px 14px;
+  animation: toast-in 0.32s cubic-bezier(0.2, 0.9, 0.25, 1);
+  background: var(--card-solid);
+  box-shadow: 0 14px 36px -12px rgba(0, 0, 0, 0.55);
+}
+
+/* ═══════════════════════════ Журнал транзакций ═══════════════════════════ */
+
+.jhead {
+  display: none;
+}
+.jhead-sort {
+  background: none;
+  border: none;
+  color: inherit;
+  font: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+  cursor: pointer;
+  text-align: left;
+  font-weight: 700;
+  padding: 0;
+}
+.jhead-sort:hover {
+  color: var(--accent);
+}
+
+.jrow {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 3px 12px;
+  align-items: center;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--line);
+  transition: background 0.15s;
+}
+.jrow:last-child {
+  border-bottom: none;
+}
+.jrow:hover {
+  background: color-mix(in srgb, var(--accent) 4%, transparent);
+}
+
+.jcell-date { display: none; font-size: 0.78rem; color: var(--muted); }
+.jcell-cat { display: flex; align-items: center; gap: 10px; min-width: 0; grid-column: 1; grid-row: 1; }
+.jcell-desc { grid-column: 1; grid-row: 2; }
+.jcell-src { display: none; }
+.jcell-status { display: none; }
+.jcell-amount { grid-column: 2; grid-row: 1; text-align: right; font-size: 0.88rem; }
+.jcell-actions { grid-column: 2; grid-row: 2; justify-self: end; display: flex; gap: 4px; }
+
+@media (min-width: 1000px) {
+  .jhead {
+    display: grid;
+    grid-template-columns: 104px 196px 1fr 104px 142px 132px 78px;
+    gap: 12px;
+    padding: 10px 18px;
+    font-size: 0.66rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+    border-bottom: 1px solid var(--line);
+    font-weight: 700;
+  }
+  .jrow {
+    grid-template-columns: 104px 196px 1fr 104px 142px 132px 78px;
+    gap: 12px;
+    padding: 8px 18px;
+  }
+  .jcell-date { display: block; grid-column: auto; grid-row: auto; min-width: 0; }
+  .jcell-cat { grid-column: auto; grid-row: auto; }
+  /* min-width: 0 обязателен: grid-элемент по умолчанию не сжимается ниже
+     содержимого, и длинное описание вылезало в соседнюю колонку «Источник» —
+     строки выглядели выровненными по-разному. */
+  .jcell-desc { grid-column: auto; grid-row: auto; min-width: 0; overflow: hidden; }
+  .jcell-src { display: block; min-width: 0; overflow: hidden; }
+  .jcell-status { display: flex; align-items: center; min-width: 0; overflow: hidden; }
+  .jcell-amount { grid-column: auto; grid-row: auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .jcell-actions { grid-column: auto; grid-row: auto; justify-self: end; }
+}
+
+/* ═══════════════════════════ Таблица инвестиций ═══════════════════════════ */
+
+.ihead {
+  display: none;
+}
+.irow {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 3px 12px;
+  align-items: center;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--line);
+  transition: background 0.15s;
+}
+.irow:last-child {
+  border-bottom: none;
+}
+.irow:hover {
+  background: color-mix(in srgb, var(--accent) 4%, transparent);
+}
+.irow > :nth-child(1) { grid-column: 1; grid-row: 1; align-self: center; }
+.irow > :nth-child(2) { display: none; }
+.irow > :nth-child(3) { display: none; }
+.irow > :nth-child(4) { grid-column: 1; grid-row: 2; }
+.irow > :nth-child(5) { grid-column: 2; grid-row: 1; }
+.irow > :nth-child(6) { grid-column: 2; grid-row: 2; text-align: right; }
+.irow > :nth-child(7) { display: none; }
+
+@media (min-width: 1000px) {
+  .ihead {
+    display: grid;
+    grid-template-columns: 150px 78px 120px 190px 140px 132px 76px;
+    gap: 12px;
+    padding: 10px 18px;
+    font-size: 0.66rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+    border-bottom: 1px solid var(--line);
+    font-weight: 700;
+  }
+  .irow {
+    grid-template-columns: 150px 78px 120px 190px 140px 132px 76px;
+    gap: 12px;
+    padding: 9px 18px;
+  }
+  .irow > :nth-child(1) { grid-column: auto; grid-row: auto; }
+  .irow > :nth-child(2) { display: block; }
+  .irow > :nth-child(3) { display: block; }
+  .irow > :nth-child(4) { grid-column: auto; grid-row: auto; }
+  .irow > :nth-child(5) { grid-column: auto; grid-row: auto; }
+  .irow > :nth-child(6) { grid-column: auto; grid-row: auto; }
+  .irow > :nth-child(7) { display: block; }
+}
+
+.icell-asset {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.price-cell {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  background: none;
+  border: 1px dashed transparent;
+  border-radius: 6px;
+  padding: 3px 7px;
+  cursor: pointer;
+  color: var(--text);
+  font-size: 0.85rem;
+  font-family: "JetBrains Mono", monospace;
+  transition: all 0.15s;
+}
+.price-cell:hover {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 8%, transparent);
+}
+.price-flash {
+  animation: flash 0.7s ease;
+  display: inline-block;
+}
+.price-edit {
+  width: 118px;
+  padding: 0.32rem 0.55rem;
+  font-size: 0.85rem;
+}
+
+/* ═══════════════════════════ Платежи ═══════════════════════════ */
+
+.pay-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 4px;
+  border-radius: 8px;
+  transition: background 0.15s;
+}
+.pay-row:hover {
+  background: color-mix(in srgb, var(--accent) 4%, transparent);
+}
+.hex-sm {
+  width: 38px;
+  height: 38px;
+}
+
+.confirm-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--text) 3%, transparent);
+  transition: border-color 0.2s;
+}
+.confirm-row:hover {
+  border-color: color-mix(in srgb, var(--accent) 40%, transparent);
+}
+.confirm-amount {
+  width: 132px;
+  text-align: right;
+}
+@media (max-width: 640px) {
+  .confirm-amount {
+    width: 100%;
+  }
+}
+
+.pay-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+  transform: rotate(45deg);
+  flex: none;
+}
+
+.tx-row {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: 12px;
+  padding: 9px 6px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  transition: background 0.15s;
+  border-radius: 6px;
+}
+.tx-row:hover {
+  background: color-mix(in srgb, var(--text) 4%, transparent);
+}
+
+/* ═══════════════════════════ Сканер ═══════════════════════════ */
+
+.dropzone {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 46px 20px;
+  border: 1.5px dashed var(--line);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--text) 2%, transparent);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.dropzone:hover,
+.dropzone-active {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 6%, transparent);
+}
+
+.scan-frame {
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  overflow: hidden;
+  position: relative;
+  background: #0a0c10;
+}
+.scan-img {
+  width: 100%;
+  max-height: 430px;
+  object-fit: contain;
+  display: block;
+}
+.scan-line {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 4%;
+  height: 2.5px;
+  background: linear-gradient(90deg, transparent, var(--accent), transparent);
+  box-shadow: 0 0 18px var(--accent);
+  will-change: transform;
+  animation: scan-sweep 2.1s ease-in-out infinite alternate;
+}
+.scan-veil {
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(0deg, rgba(0, 212, 255, 0.045) 0 2px, transparent 2px 5px);
+  pointer-events: none;
+}
+
+.raw-text {
+  max-height: 190px;
+  overflow: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-size: 0.72rem;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: var(--muted);
+  background: color-mix(in srgb, var(--text) 3%, transparent);
+  margin: 0;
+}
+
+/* ═══════════════════════════ Графики ═══════════════════════════ */
+
+.chart-tooltip {
+  position: absolute;
+  top: 0;
+  transform: translateX(-50%);
+  background: var(--card-solid);
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  padding: 6px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 0.72rem;
+  font-family: "JetBrains Mono", monospace;
+  pointer-events: none;
+  white-space: nowrap;
+  box-shadow: 0 10px 26px -8px rgba(0, 0, 0, 0.5);
+  z-index: 5;
+}
+
+.donut-row {
+  padding: 3px 6px;
+  border-radius: 6px;
+  transition: background 0.15s;
+}
+.donut-row:hover {
+  background: color-mix(in srgb, var(--text) 4%, transparent);
+}
+
+/* ═══════════════════════════ Настройки ═══════════════════════════ */
+
+.theme-card {
+  text-align: left;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--text) 3%, transparent);
+  cursor: pointer;
+  transition: all 0.18s;
+  font-family: inherit;
+}
+.theme-card:hover {
+  border-color: var(--accent);
+  transform: translateY(-2px);
+}
+.theme-card-active {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent), 0 0 20px color-mix(in srgb, var(--accent) 22%, transparent);
+}
+
+.chip-big {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 3px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: transparent;
+  color: var(--muted);
+  font-size: 0.75rem;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.chip-big:hover {
+  border-color: var(--accent);
+  color: var(--text);
+}
+.chip-big-active {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 8%, transparent);
+}
+
+.goal-done {
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--ok) 40%, transparent),
+    0 0 26px color-mix(in srgb, var(--ok) 12%, transparent);
+}
+
+/* ═══════════════════════════ Прочее ═══════════════════════════ */
+
+.empty-state {
+  text-align: center;
+  padding: 46px 20px;
+}
+
+.page-btn {
+  min-width: 30px;
+  height: 30px;
+  padding: 0 6px;
+  border-radius: 7px;
+  border: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 600;
+  font-family: inherit;
+  background: transparent;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.page-btn:hover {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+.page-btn-active {
+  color: var(--accent);
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
+}
+
+.kicker-tick {
+  width: 14px;
+  height: 3px;
+  background: var(--accent);
+  box-shadow: 0 0 8px var(--accent);
+  display: inline-block;
+}
+
+.spin {
+  animation: spin 1s linear infinite;
+}
+.pulse-soft {
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+.view-anim {
+  animation: fade-rise 0.34s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.rise-in {
+  animation: fade-rise 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+/* ═══════════════════════════ Анимации ═══════════════════════════ */
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes fade-rise {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes slide-up {
+  from { opacity: 0; transform: translateY(26px) scale(0.97); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes toast-in {
+  from { opacity: 0; transform: translateX(24px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes pulse-glow {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.55; }
+}
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+@keyframes scanmove {
+  0% { transform: translate3d(0, 0, 0); }
+  100% { transform: translate3d(0, 104vh, 0); }
+}
+/* Появление полосы активной вкладки (.nav-item-active::before) */
+@keyframes nav-bar-in {
+  from { opacity: 0; transform: scaleY(0.15) translateX(-3px); }
+  to { opacity: 1; transform: none; }
+}
+/* Медленный дрейф фоновых свечений (.app-bg-glow) */
+@keyframes glow-drift {
+  from { transform: translate3d(0, 0, 0) scale(1); }
+  to { transform: translate3d(3.5vw, 2.5vh, 0) scale(1.08); }
+}
+@keyframes scan-sweep {
+  from { transform: translate3d(0, 0, 0); }
+  to { transform: translate3d(0, 88%, 0); }
+}
+@keyframes flash {
+  0% {
+    color: var(--accent);
+    text-shadow: 0 0 10px var(--accent);
+  }
+  100% {
+    color: inherit;
+    text-shadow: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    /* Задержку тоже обнуляем: у .rise-in стоит inline animation-delay до 380 мс
+       и fill-mode: both, поэтому при «уменьшить движение» карточки оставались
+       невидимыми на время этого ожидания. */
+    animation-delay: 0ms !important;
+  }
+}
+
+/* ═══════════════ Режим экономии: слабые устройства (ТЗ п. 5) ═══════════════
+   Атрибут data-perf ставит src/hooks/useCapabilities.ts. На устройствах
+   с RAM ≤ 2 ГБ убираем размытие, свечение и декоративные анимации —
+   они съедают бюджет кадра (6,94 мс при 144 Гц, 16,67 мс при 60 Гц). */
+
+html[data-perf="low"] .sidebar,
+html[data-perf="low"] .topbar,
+/* Мобильный каркас: два постоянных слоя размытия на телефоне, до них
+   правило деградации раньше не доходило. */
+html[data-perf="low"] .mobile-nav,
+html[data-perf="low"] .mobile-topbar,
+html[data-perf="low"] .modal-overlay,
+/* .card — стекло в карточках-списках (журнал, инвестиции, тосты):
+   blur(14px) на длинном списке держит отдельный слой на каждую карточку. */
+html[data-perf="low"] .card {
+  backdrop-filter: none !important;
+}
+
+html[data-perf="low"] .card,
+html[data-perf="low"] .modal-panel,
+html[data-perf="low"] .onboarding-panel {
+  box-shadow: none !important;
+}
+
+html[data-perf="low"] .app-bg-grid,
+html[data-perf="low"] .app-bg-glow,
+html[data-perf="low"] .app-bg-glow-a,
+html[data-perf="low"] .app-bg-glow-b,
+html[data-perf="low"] .app-bg-scan,
+html[data-perf="low"] .scan-veil {
+  display: none !important;
+}
+
+/* ────────────────────────── Тосты на телефоне ──────────────────────────
+   Контейнер тостов (ui.tsx, ToastHost) помечен aria-live="polite" — по нему
+   и находим: привязываться к служебным классам Tailwind (bottom-4, right-4)
+   хрупко. На телефоне тост с z-70 перекрывал нижнюю ленту вкладок (z-45),
+   то есть на 4 секунды пропадала навигация — единственный канал обратной
+   связи. Поднимаем тост над лентой и убираем его из зоны жестов у краёв. */
+@media (max-width: 900px) {
+  div[aria-live="polite"] {
+    bottom: calc(62px + var(--sab));
+    left: calc(10px + var(--sal));
+    right: calc(10px + var(--sar));
+    width: auto;
+  }
+}
+
+/* ────────────────────────── Касательный ввод (телефон) ──────────────────────────
+   Вёрстка настраивалась в десктопном браузере мышью. На телефоне два класса
+   правок принципиально разные, поэтому они живут здесь и не трогают десктоп:
+
+   1) Зона нажатия. Пальцу нужно ~44 CSS-пикселя, у иконок-кнопок было 30.
+      Увеличиваем min-height, не меняя раскладку.
+   2) Кегль в полях. Blink на Android увеличивает visual viewport, если кегль
+      поля меньше 16 пикселей, и отдаляет назад при потере фокуса — выглядит
+      как «вспышка зума». На 16 пикселях авто-зум не включается. */
+@media (pointer: coarse) {
+  .btn,
+  .btn-sm,
+  .btn-icon,
+  .chip,
+  .segmented-btn,
+  .page-btn,
+  .mobile-nav-btn {
+    min-height: 44px;
+  }
+  .btn-icon,
+  .page-btn {
+    min-width: 44px;
+  }
+  .input,
+  select.input,
+  .price-edit,
+  .chip-date {
+    font-size: 1rem;
+  }
+  /* Поле при авто-прокрутке к нему не должно липнуть к краю модалки. */
+  .input,
+  .cat-item,
+  .cat-picker {
+    scroll-margin-block: 24px;
+  }
+}
+
+/* ────────────────────────── Средний уровень устройства ──────────────────────────
+   Уровень «mid» существовал в коде (capabilities.ts), но ни одним правилом
+   не описывался: телефон со средним запасом памяти получал полные эффекты —
+   размытие на каждой карточке и два фоновых свечения с will-change. */
+html[data-perf="mid"] .app-bg-glow,
+html[data-perf="mid"] .app-bg-glow-a,
+html[data-perf="mid"] .app-bg-glow-b {
+  display: none !important;
+}
+html[data-perf="mid"] .card {
+  backdrop-filter: none !important;
+}
+
+html[data-perf="low"] .pulse-soft,
+html[data-perf="low"] .spin,
+html[data-perf="low"] .view-anim,
+html[data-perf="low"] .rise-in,
+/* Остальные декоративные эффекты, которые на слабом устройстве продолжали
+   играть: появление модалки, вспышка цены, пульс статуса и сканер чека. */
+html[data-perf="low"] .modal-overlay,
+html[data-perf="low"] .price-flash,
+html[data-perf="low"] .status-dot,
+html[data-perf="low"] .scan-line {
+  animation: none !important;
+}
+
+html[data-perf="low"] .progress-fill {
+  transition: none !important;
+}
+
+/* Прогресс-бар при «уменьшить движение»: WAAPI-анимация выключена, и конечное
+   значение пишется прямо в inline-стиль (см. scaleProgress в
+   src/animations/waapi.ts). Без этого CSS-переход сгладил бы «мгновенное»
+   применение значения на 0.65 с — это снова движение. */
+html[data-motion="reduced"] .progress-fill {
+  transition: none !important;
+}
+
+html[data-motion="reduced"] .view-anim,
+html[data-motion="reduced"] .rise-in,
+html[data-motion="reduced"] .toast,
+html[data-motion="reduced"] .modal-panel {
+  animation: none !important;
+}
+
+/* ═══════════════ Упрощение длинных списков и таблиц (ТЗ Группа 4) ═══════════════
+   Селекторы взяты из реальной разметки, новых классов не вводим:
+   .jrow     — журнал транзакций (src/views/Transactions.tsx:280);
+   .irow     — таблица инвестиций (src/views/Investments.tsx:207);
+   .tx-row   — быстрый список последних операций (src/views/Dashboard.tsx:196);
+   .donut-row — легенда доната расходов (src/components/charts.tsx:150);
+   .jcell-src — второстепенная подпись «источник операции» (src/index.css:878). */
+
+/* 1. Переходы строк выключаем: transition: background на каждой строке
+      длинного списка означает перерисовку и пересчёт слоёв. */
+html[data-perf="low"] .jrow,
+html[data-perf="low"] .irow,
+html[data-perf="low"] .tx-row,
+html[data-perf="low"] .donut-row {
+  transition: none !important;
+}
+
+/* 2. Разделители: оставляем их только у нечётных строк — вдвое меньше
+      линий на отрисовку, список всё ещё читается. Списки на .divide-y
+      (src/views/Dashboard.tsx:193, src/views/Payments.tsx:254 и :294)
+      получают разделитель от Tailwind, поэтому гасим цвет, а не ширину. */
+html[data-perf="low"] .jrow:nth-child(even),
+html[data-perf="low"] .irow:nth-child(even) {
+  border-bottom-color: transparent !important;
+}
+html[data-perf="low"] .divide-y > :nth-child(even) {
+  border-color: transparent !important;
+}
+
+/* 3. Hover-подсветка строк выключена. У .jrow исключаем выделенные строки
+      (класс .selected, src/views/Transactions.tsx:280) — иначе индикатор
+      выделения пропадёт ровно в момент наведения. */
+html[data-perf="low"] .irow:hover,
+html[data-perf="low"] .tx-row:hover,
+html[data-perf="low"] .donut-row:hover,
+html[data-perf="low"] .jrow:not(.selected):hover {
+  background: none !important;
+}
+
+/* 4. Второстепенные подписи: источник операции в журнале. Суммы, даты и
+      статусы не трогаем — это данные, а не украшение. */
+html[data-perf="low"] .jrow .jcell-src {
+  display: none !important;
+}
+
+/* Бюджет кадра на экранах высокой ПЛОТНОСТИ. Важно: min-resolution — это
+   плотность пикселей (device pixel ratio), а НЕ частота кадров: при 144 Гц
+   на обычном 1×-экране это правило не сработает, а на Retina с 60 Гц — да.
+   Смысл прежний: на 2× и выше каждый кадр обходится дороже (в 4 раза больше
+   физических пикселей), поэтому сокращаем длительности декоративных
+   эффектов. Inline-лесенка задержек (60–380 мс у .rise-in) при этом
+   сохраняется — она задана в разметке, и её обнуление сделало бы появление
+   карточек одновременным. */
+@media (min-resolution: 120dpi) {
+  .view-anim {
+    animation-duration: 0.24s;
+  }
+  .rise-in {
+    animation-duration: 0.32s;
+  }
+}
+@media (min-resolution: 192dpi) {
+  .view-anim,
+  .rise-in {
+    animation-duration: 0.22s;
+  }
+}

@@ -1,0 +1,52 @@
+// ---------------------------------------------------------------------------
+// ЗАЧЕМ ЭТОТ БЛОК (в шаблоне Capacitor 8 его нет)
+//
+// В этой сети repo.maven.apache.org / repo1.maven.org резолвятся в 198.18.x.x
+// (локальный TUN/прокси) и периодически рвут TLS-рукопожатие, из-за чего падает
+// резолв kotlin-stdlib, org.apache.cordova:framework, org.json:json и прочего.
+// Рабочее зеркало Maven Central — https://maven-central.storage-download.googleapis.com/maven2
+// (это же зеркало уже прописано в ~/.gradle/init.d/nexus1-maven-shim.gradle как
+// прокси для jcenter(), но типичный проект вызывает mavenCentral() напрямую и
+// init-скрипт этот случай не покрывает).
+//
+// Поэтому мы собираем единый список репозиториев ЗДЕСЬ, в settings.gradle, и
+// включаем PREFER_SETTINGS: репозитории, объявленные в build.gradle отдельных
+// модулей (в т.ч. в node_modules/@capacitor/android/capacitor/build.gradle,
+// который нам править нельзя), просто игнорируются. Так настройка не зависит от
+// того, переустановили мы node_modules или нет.
+//
+// ВАЖНО: pluginManagement обязан быть ПЕРВЫМ оператором в settings.gradle
+// (Gradle 9.3.1 ругается "must appear before any other statements"), поэтому
+// include-строки ниже перенесены под него.
+// ---------------------------------------------------------------------------
+pluginManagement {
+    repositories {
+        // Зеркало Maven Central ПЕРВЫМ: plugin-маркеры и Kotlin-плагины лежат в Central.
+        maven { url = 'https://maven-central.storage-download.googleapis.com/maven2' }
+        google()
+        gradlePluginPortal()
+        mavenCentral()
+    }
+}
+
+dependencyResolutionManagement {
+    // PREFER_SETTINGS, а не FAIL_ON_PROJECT_REPOS: последний заставил бы вычистить
+    // `repositories {}` из capacitor.build.gradle / cordova-плагинов.
+    repositoriesMode = RepositoriesMode.PREFER_SETTINGS
+    repositories {
+        google()
+        maven { url = 'https://maven-central.storage-download.googleapis.com/maven2' }
+        mavenCentral()
+        // Аналог flatDir{} из app/build.gradle (cordova-плагины кладут .jar сюда);
+        // при PREFER_SETTINGS репозитории проекта не видны, поэтому переносим сюда же.
+        flatDir { dirs new File(settingsDir, 'capacitor-cordova-android-plugins/src/main/libs'), new File(settingsDir, 'app/libs') }
+    }
+}
+
+include ':app'
+include ':capacitor-cordova-android-plugins'
+project(':capacitor-cordova-android-plugins').projectDir = new File('./capacitor-cordova-android-plugins/')
+
+// Ниже — файл, который Capacitor перегенерирует при каждом `npx cap update`.
+// Его не правим: все настройки репозиториев живут выше.
+apply from: 'capacitor.settings.gradle'

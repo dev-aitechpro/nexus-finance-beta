@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Сгенерировано scripts/build-android-icons.ps1: цвет подложки adaptive-icon
+     взят из доминирующего цвета public/favicon.ico. -->
+<resources>
+    <color name="ic_launcher_background">#070E1B</color>
+</resources>
