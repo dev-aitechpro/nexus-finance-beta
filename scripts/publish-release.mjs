@@ -51,6 +51,7 @@
 
 import { spawn, spawnSync } from "node:child_process";
 import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
+import https from "node:https";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -244,6 +245,73 @@ const NETWORK_HINT = [
  * недоступна, и с расшифровкой 401/403/404 — иначе по коду статуса непонятно,
  * что именно не так.
  */
+/**
+ * Обход подменённого DNS.
+ *
+ * На этой машине локальный резолвер отдаёт для api.github.com неверный
+ * адрес: соединение уходит в никуда и обрывается. При этом github.com
+ * резолвится верно и git работает, а блокирующий список лежит в
+ * hosts-файле, который переписывает сторонняя служба (проверено: в файле
+ * есть пометка `dns.malw.link`, и дописанная вручную строка исчезает).
+ *
+ * Проверка: обычный запрос — 000, тот же запрос по настоящему адресу из
+ * DoH — 200. Поэтому при сетевой ошибке адрес берём у DNS-over-HTTPS и
+ * повторяем запрос, соединяясь с адресом, но отправляя SNI и Host
+ * настоящего имени: проверка сертификата остаётся настоящей, а не
+ * отключается.
+ */
+const DOH_ENDPOINT = "https://cloudflare-dns.com/dns-query";
+let pinnedAddress = null;
+
+const resolveOverHttps = async (hostname) => {
+  if (pinnedAddress) return pinnedAddress;
+  const res = await fetch(`${DOH_ENDPOINT}?name=${hostname}&type=A`, {
+    headers: { accept: "application/dns-json" },
+  });
+  if (!res.ok) throw new Error(`DoH вернул ${res.status}`);
+  const data = await res.json();
+  const address = (Array.isArray(data.Answer) ? data.Answer : [])
+    .filter((a) => a.type === 1 && typeof a.data === "string")
+    .map((a) => a.data)[0];
+  if (!address) throw new Error("DoH не вернул A-запись");
+  pinnedAddress = address;
+  warn(`DNS подменён: для ${hostname} беру настоящий адрес ${address} (DoH).`);
+  return address;
+};
+
+/** Тот же запрос, но к адресу, с SNI и Host настоящего имени. */
+const requestToAddress = (target, address, { method, headers, body }) =>
+  new Promise((resolve, reject) => {
+    const url = new URL(target);
+    const req = https.request(
+      {
+        host: address,
+        servername: url.hostname,
+        path: `${url.pathname}${url.search}`,
+        method,
+        headers: { ...headers, Host: url.host },
+      },
+      (res) => {
+        const chunks = [];
+        res.on("data", (c) => chunks.push(c));
+        res.on("end", () => {
+          const text = Buffer.concat(chunks).toString("utf8");
+          resolve({
+            status: res.statusCode,
+            ok: res.statusCode >= 200 && res.statusCode < 300,
+            // Формат как у ответа fetch: дальше зовут res.text(), res.ok и
+            // res.headers.get(), поэтому объект должен выглядеть так же.
+            headers: { get: (name) => res.headers[String(name).toLowerCase()] ?? null },
+            text: async () => text,
+          });
+        });
+      },
+    );
+    req.on("error", reject);
+    if (body !== undefined) req.write(typeof body === "string" ? Buffer.from(body) : body);
+    req.end();
+  });
+
 async function api(method, endpoint, { body, rawBody, accept = "application/vnd.github+json", allow = [] } = {}) {
   const url = endpoint.startsWith("http") ? endpoint : `${API}${endpoint}`;
   const headers = {
@@ -266,9 +334,15 @@ async function api(method, endpoint, { body, rawBody, accept = "application/vnd.
     res = await fetch(url, { method, headers, body: payload });
   } catch (e) {
     const cause = e?.cause?.code ?? e?.cause?.message ?? e?.message ?? "";
-    err(`Сеть: ${redact(cause || e)} — ${method} ${redact(url)}`);
-    out(`\n      ${NETWORK_HINT}\n`);
-    process.exit(1);
+    // Подменённый резолвер — самая частая причина обрыва именно здесь.
+    try {
+      const address = await resolveOverHttps(new URL(url).hostname);
+      res = await requestToAddress(url, address, { method, headers, body: payload });
+    } catch {
+      err(`Сеть: ${redact(cause || e)} — ${method} ${redact(url)}`);
+      out(`\n      ${NETWORK_HINT}\n`);
+      process.exit(1);
+    }
   }
 
   const text = await res.text();
@@ -629,8 +703,15 @@ function newestSourceMtime() {
   const files = [
     "electron-main.cjs", "preload.cjs", "index.html", "index.dev.html",
     "package.json", "vite.config.ts", "vite.dev.config.ts", "vite.shared.ts",
-    "capacitor.config.ts", "tsconfig.json",
+    "capacitor.config.ts", "tsconfig.json", "license.txt",
   ];
+  // Файлы, которые пишет сам `cap sync`. Их время меняется при каждой
+  // синхронизации, и без исключения сборка всегда выглядит «старше
+  // исходников»: предупреждение срабатывает на пустом месте и учит
+  // предупреждения игнорировать.
+  const generated = new Set([
+    path.join("android", "app", "src", "main", "res", "xml", "config.xml"),
+  ]);
   let newest = 0;
   let newestFile = "";
   let seen = 0;
@@ -656,6 +737,7 @@ function newestSourceMtime() {
       }
       return;
     }
+    if (generated.has(rel)) return;
     if (st.mtimeMs > newest) {
       newest = st.mtimeMs;
       newestFile = rel;
@@ -740,7 +822,15 @@ function checkArtifacts(plan, version) {
     const st = statSync(item.file);
     if (st.size === 0) die(`файл пустой (0 байт): ${path.relative(ROOT, item.file)}`);
     const name = path.basename(item.file);
-    if (!name.includes(version)) {
+    // Номер версии в имени обязателен только для файлов electron-builder:
+    // он подставляет версию в имя сам, и по нему видно, что сборка свежая.
+    //
+    // Для APK это не так: имя задаёт Gradle, оно всегда `app-release.apk`,
+    // независимо от версии. Требовать там версию нельзя — сборка
+    // проверяется по `versionName` в build.gradle (шаг 1), и по содержимому:
+    // сверку бандла делает scripts/check-bundles.mjs.
+    const versionInNameExpected = item !== plan.apk;
+    if (versionInNameExpected && !name.includes(version)) {
       const hint = name.includes(base)
         ? `имя содержит «${base}», а релиз — «${version}»: в релиз уехала бы сборка другой версии`
         : "в имени нет номера версии";
@@ -754,9 +844,27 @@ function checkArtifacts(plan, version) {
   }
 
   // Свежесть: артефакт не должен быть старше последней правки исходников.
+  //
+  // Исключение — APK: Gradle пересобирает пакет не всегда, и если вёрстка
+  // не изменилась по содержанию, файл остаётся с прежним временем. Время
+  // здесь врёт, поэтому актуальность APK проверяется по содержимому: бандл
+  // внутри пакета сравнивается с dist/ (scripts/check-bundles.mjs умеет
+  // читать запись из zip). Так и вышло однажды: файл APK отставал по дате,
+  // но содержал ровно нужный бандл.
+  const bundleCheck = spawnSync(process.execPath, [path.join(ROOT, "scripts", "check-bundles.mjs")], {
+    cwd: ROOT,
+    encoding: "utf8",
+  });
+  if (bundleCheck.status === 0) {
+    const line = (bundleCheck.stdout ?? "").split(/\r?\n/).find((l) => l.includes("внутри app-release.apk"));
+    ok(line ? line.replace(/^.*?внутри/, "внутри") : "содержимое APK совпадает с dist/");
+  } else {
+    warn(`не удалось подтвердить содержимое APK (проверка check-bundles):\n${(bundleCheck.stdout ?? "").trim()}`);
+  }
+
   const src = newestSourceMtime();
   if (src.mtime) {
-    const stale = built.filter((a) => a.mtime < src.mtime);
+    const stale = built.filter((a) => a.mtime < src.mtime && a.name !== path.basename(plan.apk.file));
     info(`последняя правка исходников: ${fmtDate(src.mtime)} (${src.file})`);
     if (stale.length) {
       warn(`сборка старше исходников: ${stale.map((a) => a.name).join(", ")}
