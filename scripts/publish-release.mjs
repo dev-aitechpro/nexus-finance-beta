@@ -955,6 +955,15 @@ async function ensureRelease(version, { pushed }) {
         allowPrerelease не отфильтрует его по каналу. Исправляю метку.`);
       if (!DRY_RUN) await api("PATCH", `/repos/${OWNER}/${REPO}/releases/${rel.id}`, { body: { prerelease: true } });
     }
+    // Заметки к релизу тоже могли устареть: они берутся из CHANGELOG.md, а он
+    // правится уже после первой публикации. Без этой правки страница релиза
+    // навсегда осталась бы с тем текстом, который был в момент первого
+    // запуска, — а читатель её видит первым.
+    if (rel.body !== body && !DRY_RUN) {
+      out("      заметки релиза отличаются от CHANGELOG.md — обновляю");
+      await api("PATCH", `/repos/${OWNER}/${REPO}/releases/${rel.id}`, { body: { body: body.slice(0, 60000) } });
+      ok("заметки релиза обновлены");
+    }
     return rel;
   }
 
@@ -1019,7 +1028,15 @@ async function uploadAssets(plan, release, yml) {
     info("--dry-run: файлы не загружаем");
     return [];
   }
+  // GitHub нормализует имена файлов в релизе: пробелы заменяются точками
+  // («NEXUS Finance 1.0.0-beta.1.exe» попадает на сервер как
+  // «NEXUS.Finance.1.0.0-beta.1.exe»). Обратное преобразование не нужно и
+  // было бы неверным: точки в номере версии — настоящие. Поэтому ищем
+  // существующий файл по тому же преобразованию, что применяет GitHub, иначе
+  // повторный запуск падает с 422: файл-то есть, но под другим именем.
+  const asGitHubStores = (name) => name.replace(/\s/g, ".");
   const existing = new Map((release.assets ?? []).map((a) => [a.name, a]));
+  const findExisting = (name) => existing.get(name) ?? existing.get(asGitHubStores(name));
 
   // Имя файла в релизе для установщика берём ИЗ yml: electron-updater строит
   // адрес загрузки как `releases/download/<tag>/<имя>` и пробелы заменяет на
@@ -1071,15 +1088,17 @@ async function uploadAssets(plan, release, yml) {
       continue;
     }
     const size = statSync(asset.file).size;
-    if (existing.has(asset.name)) {
+    const already = findExisting(asset.name);
+    if (already) {
       if (!FORCE_ASSETS) {
-        ok(`${asset.name} — уже в релизе (${fmtSize(size)}), пропускаю; --force-assets перезальёт`);
-        uploaded.push({ name: asset.name, size, skipped: true });
+        const asStored = already.name === asset.name ? "" : ` (на сервере как «${already.name}»)`;
+        ok(`${asset.name} — уже в релизе${asStored} (${fmtSize(size)}), пропускаю; --force-assets перезальёт`);
+        uploaded.push({ name: already.name, size, skipped: true });
         continue;
       }
       if (DRY_RUN) continue;
-      out(`      удаляю прежний ${asset.name} (--force-assets) …`);
-      await api("DELETE", `/repos/${OWNER}/${REPO}/releases/assets/${existing.get(asset.name).id}`);
+      out(`      удаляю прежний ${already.name} (--force-assets) …`);
+      await api("DELETE", `/repos/${OWNER}/${REPO}/releases/assets/${already.id}`);
     }
 
     const url = new URL(`${UPLOADS}/repos/${OWNER}/${REPO}/releases/${release.id}/assets`);
